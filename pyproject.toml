@@ -4,8 +4,8 @@ build-backend = "hatchling.build"
 
 [project]
 name = "scp-memory-core"
-version = "0.2.0"
-description = "SCP Memory Engine — the memory infrastructure layer for AI systems (Phase 2: Memory Intelligence)."
+version = "0.3.0"
+description = "SCP Memory Engine — the memory infrastructure layer for AI systems (Phase 3: Hybrid Retrieval)."
 readme = "README.md"
 requires-python = ">=3.11"
 license = { file = "LICENSE" }
@@ -24,6 +24,11 @@ dev = [
   "httpx>=0.27",
   "ruff>=0.4",
   "black>=24.0",
+]
+# Scale-path vector backend (Phase 3). The default "bruteforce" backend needs
+# nothing extra; install this only to run Qdrant ANN (SCP_VECTOR_BACKEND=qdrant).
+vector = [
+  "qdrant-client>=1.7",
 ]
 
 [tool.hatch.build.targets.wheel]

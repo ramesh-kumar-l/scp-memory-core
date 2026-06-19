@@ -1,6 +1,6 @@
 # 14 — Ranking Model
 
-**Status:** Design intent · **Primary target:** Phase 3 (+ trust in Phase 4) · **Last updated:** 2026-06-20
+**Status:** Implemented (Phase 3; + trust in Phase 4) · **Last updated:** 2026-06-20
 
 How retrieved candidates are scored and ordered. Ranking consumes the candidate
 set from retrieval ([13-retrieval-model](13-retrieval-model.md)) and produces an

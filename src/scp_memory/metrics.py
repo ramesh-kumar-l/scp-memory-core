@@ -16,6 +16,8 @@ MEMORIES_DEDUPED = Counter("scp_memories_deduped_total", "Duplicate memories mer
 MEMORIES_CONSOLIDATED = Counter(
     "scp_memories_consolidated_total", "Summary memories produced by consolidation."
 )
+# Hybrid retrieval (Phase 3).
+RETRIEVAL_QUERIES = Counter("scp_retrieval_queries_total", "Retrieval queries served.", ["mode"])
 API_REQUEST_DURATION = Histogram(
     "scp_api_request_duration_seconds",
     "API request latency in seconds.",

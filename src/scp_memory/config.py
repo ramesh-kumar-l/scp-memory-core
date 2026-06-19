@@ -24,6 +24,13 @@ class Settings(BaseSettings):
     decay_threshold: float = 0.25  # importance below this → decayed
     dedup_similarity_threshold: float = 0.85  # Jaccard at/above this → duplicate
 
+    # Hybrid retrieval (Phase 3). Vector backend: "bruteforce" (default, in-process,
+    # zero-infra) or "qdrant" (scale path; needs the [vector] extra + a running
+    # Qdrant). Algorithmic knobs (dims, weights, k) live in retrieval.config.
+    vector_backend: str = "bruteforce"
+    qdrant_url: str = "http://localhost:6333"
+    qdrant_collection: str = "scp_memories"
+
 
 @lru_cache
 def get_settings() -> Settings:

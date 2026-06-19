@@ -40,7 +40,9 @@ captured here at the next public-build milestone (proper harness + fixed env).
 |---|---|---|---|
 | Phase 0 | — | — | No code yet |
 | Phase 1 | create p_avg | ceiling < 50 ms/op | In-memory SQLite seed; regression guard only |
-| Phase 2 | dedup precision/recall | not yet measured | Lexical Jaccard; quality eval deferred to the Phase 3 retrieval harness + fixed eval set |
+| Phase 2 | dedup precision/recall | not yet measured | Lexical Jaccard; quality eval deferred to the retrieval harness + fixed eval set |
+| Phase 3 | retrieval precision@k / nDCG | not yet measured | Hybrid pipeline shipped; quality eval needs a real embedder + fixed eval set (deferred to production hardening) |
+| Phase 3 | weighted vs RRF | not yet decided | Both implemented; default = weighted-linear (explainable); empirical pick pending the eval set |
 
 ## Related
 

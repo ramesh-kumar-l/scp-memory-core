@@ -9,11 +9,11 @@ Cross-cutting initiatives currently in flight. Distinct from the single active
 
 | Initiative | Status | Notes |
 |---|---|---|
-| — | — | No active initiative; awaiting approval to start Phase 3. |
+| — | — | No active initiative; awaiting approval to start Phase 4. |
 
 ## Queued (not started)
 
-- Phase 3 — Hybrid Retrieval (pending explicit approval to begin)
+- Phase 4 — Trust Layer (pending explicit approval to begin)
 
 ## Done
 
@@ -21,6 +21,8 @@ Cross-cutting initiatives currently in flight. Distinct from the single active
 - **Phase 1 — Memory Core** (2026-06-20): audited, namespaced CRUD; 18 tests; CI.
 - **Phase 2 — Memory Intelligence** (2026-06-20): importance, dedup, consolidation,
   decay; first `memory_relations` writes; 46 tests.
+- **Phase 3 — Hybrid Retrieval** (2026-06-20): keyword (BM25) + vector + metadata +
+  explainable ranking fusion; pluggable `Embedder`/vector backends; 70 tests.
 
 ## Related
 

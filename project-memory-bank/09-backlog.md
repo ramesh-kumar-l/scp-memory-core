@@ -19,13 +19,16 @@ phase is approved. The active phase is tracked in [08-active-phase](08-active-ph
 - [x] Consolidation (summary memories with `derived_from`)
 - [x] Decay (importance over time → `decayed` state)
 
-## Phase 3 — Hybrid Retrieval (next, pending approval)
-- [ ] Keyword retrieval (FTS/BM25)
-- [ ] Vector retrieval (Qdrant integration, embeddings)
-- [ ] Metadata filtering
-- [ ] Ranking engine (fusion: weighted vs RRF; benchmark to decide)
+## Phase 3 — Hybrid Retrieval ✅ complete (2026-06-20)
+- [x] Keyword retrieval (pure Okapi BM25 over filtered candidates)
+- [x] Vector retrieval (`HashingEmbedder` stand-in + cosine; Qdrant backend seam)
+- [x] Metadata filtering (namespace/type/state constraints)
+- [x] Ranking engine (weighted-linear default + RRF; importance as a signal)
+- [ ] *Deferred to production hardening:* real embedding model behind `Embedder`;
+  Qdrant in CI; FTS5/`tsvector` inverted index; weighted-vs-RRF benchmark on a
+  fixed eval set
 
-## Phase 4 — Trust Layer
+## Phase 4 — Trust Layer (next, pending approval)
 - [ ] Provenance quality scoring
 - [ ] Confidence (corroboration/contradiction)
 - [ ] Freshness (type-aware)

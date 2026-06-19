@@ -4,53 +4,60 @@
 
 > Doubles as the project's **active-context** save state (05 working agreement).
 
-## Active Phase: 2 — Memory Intelligence ✅ complete (awaiting approval for Phase 3)
+## Active Phase: 3 — Hybrid Retrieval ✅ complete (awaiting approval for Phase 4)
 
 ### Goal
-Memory that manages itself: importance scoring, deduplication, consolidation,
-and decay — the self-management layer over Phase 1's audited CRUD.
+Relevant recall across signals: keyword (lexical) + vector (semantic) + metadata
+retrieval, fused by a ranking engine that consumes the Phase-2 `importance`
+signal — with **explainable** per-signal scores on every result.
 
 ### Deliverables
-- [x] Importance scoring (recency + frequency + explicit signal → `importance` in [0,1])
-- [x] Deduplication (lexical Jaccard; archive non-canonical + `supersedes` edges)
-- [x] Consolidation (summary memory + `derived_from` edges; sources → `consolidated`)
-- [x] Decay (recompute over namespace; below-threshold `active` → `decayed`)
-- [x] First `memory_relations` write paths (`relation_service`)
-- [x] Intelligence API (`/v1/intelligence/decay|dedup|consolidate`); importance on every read
-- [x] Tests (unit pure-logic + per-service + integration), metrics, logging, docs, example
+- [x] Embeddings: pure `HashingEmbedder` + cosine behind an `Embedder` protocol
+- [x] Keyword retrieval: pure Okapi BM25 over metadata-filtered candidates
+- [x] Vector backend seam: `BruteForceBackend` (default) + optional Qdrant adapter
+- [x] Fusion: weighted-linear (default, explainable) + RRF; importance as a signal
+- [x] Orchestration (`retrieval_service`): filter → keyword ∪ vector → fuse → rank
+- [x] Retrieval touches returned hits (feeds Phase-2 importance/decay loop)
+- [x] API (`POST /v1/retrieval/search`) with explainable signals + weights
+- [x] Tests (pure unit + service + integration), metrics, logging, docs, example
 
 ### Exit Criteria (all met)
-- 46 tests passing (+ benchmark seed); ruff + black clean.
-- Every transition audited; provenance preserved; lifecycle states honoured.
-- Strict modularity: longest source file 192 lines (none > 300).
+- 70 tests passing (+ benchmark seed); ruff + black clean.
+- Every result is explainable (per-signal scores + weights); namespace-isolated.
+- Strict modularity: longest source file 192 lines (none > 300; longest new 134).
 - Quality gates satisfied ([05-engineering-principles](05-engineering-principles.md)).
 
 ### Status
-**Complete** (pending user confirmation). Awaiting approval to start Phase 3.
+**Complete** (pending user confirmation). Awaiting approval to start Phase 4.
 
 ### Key decisions
-- Similarity is **lexical** (token-set Jaccard) in Phase 2; semantic/embedding
-  dedup arrives with the vector store in Phase 3. Merge logic is scorer-agnostic.
-- New `Memory.access_count` column feeds the frequency signal.
-- `GET /v1/memories` default now returns **active only**; lifecycle by-products
-  reachable via explicit `state` filter.
-- Added `AuditAction.deduplicate`. Version bumped 0.1.0 → 0.2.0.
+- **Embedder is a deterministic stand-in.** `HashingEmbedder` gives semantic-shaped
+  vectors driven by shared tokens/hash buckets, not true meaning — chosen for
+  zero-infra, hermetic, reproducible runs. A real model drops in behind the
+  `Embedder` protocol with no change to retrieval/ranking.
+- **Two vector backends behind one seam.** In-process brute-force is the tested
+  default; Qdrant (`SCP_VECTOR_BACKEND=qdrant`, `[vector]` extra) is the
+  integration-only scale path, not covered by CI.
+- **Default fusion = weighted-linear** (matches the explainability contract); RRF
+  available. Keyword/vector signals normalized per result set; importance absolute.
+- Retrieval **mutates on read** (touch top-k) by design (13-retrieval-model).
+- Version bumped 0.2.0 → 0.3.0.
 
 ---
 
 ## ⛔ Stop Rule (operating model)
 
-> One phase is active at a time. **Do NOT begin Phase 3 (Hybrid Retrieval)
-> without explicit user approval.** Never work ahead or skip phases.
+> One phase is active at a time. **Do NOT begin Phase 4 (Trust Layer) without
+> explicit user approval.** Never work ahead or skip phases.
 
 At the end of any phase: update `07`, `08`, `28`, then **stop** and wait for
 explicit instruction.
 
 ## Next Phase (do not start yet)
 
-**Phase 3 — Hybrid Retrieval:** keyword + vector (Qdrant) + metadata retrieval and
-a ranking engine that consumes the `importance` signal produced here. Scoped in
-[09-backlog](09-backlog.md).
+**Phase 4 — Trust Layer:** provenance quality, confidence (corroboration/
+contradiction), freshness, and explainability output — layered onto the retrieval
+results produced here. Scoped in [09-backlog](09-backlog.md).
 
 ## Related
 
