@@ -19,6 +19,11 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
     service_name: str = "scp-memory-core"
 
+    # Memory intelligence knobs (Phase 2). Operational thresholds for the batch
+    # decay/dedup passes; scoring weights live in intelligence.scoring.ScoringConfig.
+    decay_threshold: float = 0.25  # importance below this → decayed
+    dedup_similarity_threshold: float = 0.85  # Jaccard at/above this → duplicate
+
 
 @lru_cache
 def get_settings() -> Settings:

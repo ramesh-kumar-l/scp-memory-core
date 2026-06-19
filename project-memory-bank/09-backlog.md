@@ -13,13 +13,13 @@ phase is approved. The active phase is tracked in [08-active-phase](08-active-ph
 - [x] FastAPI endpoints for CRUD + `/audit`
 - [x] Tests (unit + integration), metrics, logging, docs, examples, benchmark seed
 
-## Phase 2 — Memory Intelligence (next, pending approval)
-- [ ] Importance scoring (recency, frequency, explicit signals)
-- [ ] Deduplication (semantic + metadata)
-- [ ] Consolidation (summary memories with `derived_from`)
-- [ ] Decay (importance over time → `decayed` state)
+## Phase 2 — Memory Intelligence ✅ complete (2026-06-20)
+- [x] Importance scoring (recency, frequency, explicit signals)
+- [x] Deduplication (lexical Jaccard + per-type/namespace; semantic = Phase 3)
+- [x] Consolidation (summary memories with `derived_from`)
+- [x] Decay (importance over time → `decayed` state)
 
-## Phase 3 — Hybrid Retrieval
+## Phase 3 — Hybrid Retrieval (next, pending approval)
 - [ ] Keyword retrieval (FTS/BM25)
 - [ ] Vector retrieval (Qdrant integration, embeddings)
 - [ ] Metadata filtering

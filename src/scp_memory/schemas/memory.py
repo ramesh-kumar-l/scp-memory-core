@@ -39,6 +39,7 @@ class MemoryRead(BaseModel):
     type: MemoryType
     state: MemoryState
     importance: float | None = None
+    access_count: int = 0
     namespace: str
     metadata: dict = Field(default_factory=dict, validation_alias="meta")
     created_at: datetime

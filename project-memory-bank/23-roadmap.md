@@ -1,6 +1,6 @@
 # 23 — Roadmap
 
-**Status:** Active · **Phase:** 0 · **Last updated:** 2026-06-20
+**Status:** Active · **Phase:** 2 complete · **Last updated:** 2026-06-20
 
 Phases are executed strictly in order. Only one phase is active at a time; work
 stops at each boundary for explicit approval. See [08-active-phase](08-active-phase.md)
@@ -33,8 +33,9 @@ for the current phase.
 
 ## Current Position
 
-Phases 0–1 complete. Memory Core (audited, namespaced CRUD) is shipped and
-tested. Next: Phase 2 (Memory Intelligence), to begin **only after explicit
+Phases 0–2 complete. Memory Core (audited, namespaced CRUD) and Memory
+Intelligence (importance, dedup, consolidation, decay) are shipped and tested
+(46 tests). Next: Phase 3 (Hybrid Retrieval), to begin **only after explicit
 approval**.
 
 ## Related

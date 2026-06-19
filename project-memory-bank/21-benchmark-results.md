@@ -40,6 +40,7 @@ captured here at the next public-build milestone (proper harness + fixed env).
 |---|---|---|---|
 | Phase 0 | — | — | No code yet |
 | Phase 1 | create p_avg | ceiling < 50 ms/op | In-memory SQLite seed; regression guard only |
+| Phase 2 | dedup precision/recall | not yet measured | Lexical Jaccard; quality eval deferred to the Phase 3 retrieval harness + fixed eval set |
 
 ## Related
 

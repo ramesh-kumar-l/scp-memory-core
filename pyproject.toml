@@ -4,8 +4,8 @@ build-backend = "hatchling.build"
 
 [project]
 name = "scp-memory-core"
-version = "0.1.0"
-description = "SCP Memory Engine — the memory infrastructure layer for AI systems (Phase 1: Memory Core)."
+version = "0.2.0"
+description = "SCP Memory Engine — the memory infrastructure layer for AI systems (Phase 2: Memory Intelligence)."
 readme = "README.md"
 requires-python = ">=3.11"
 license = { file = "LICENSE" }

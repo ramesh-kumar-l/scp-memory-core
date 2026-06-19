@@ -17,7 +17,7 @@ from scp_memory.models.enums import AuditAction, MemoryState
 from scp_memory.models.memory import Memory
 from scp_memory.models.provenance import Provenance
 from scp_memory.schemas.memory import MemoryCreate, MemoryUpdate
-from scp_memory.services import audit_service
+from scp_memory.services import audit_service, importance_service
 from scp_memory.services.errors import NotFoundError
 from scp_memory.utils.time import utcnow
 
@@ -61,7 +61,8 @@ def create(db: Session, data: MemoryCreate, *, actor: str) -> Memory:
         derivation={"kind": "raw"},
     )
     db.add(memory)
-    db.flush()  # assign server-generated id
+    db.flush()  # assign server-generated id + created_at
+    importance_service.recompute(memory)  # initial importance (recency-dominated)
     audit_service.record(
         db,
         memory_id=memory.id,
@@ -80,6 +81,8 @@ def get(db: Session, memory_id: str, *, namespace: str | None = None, touch: boo
     memory = _get(db, memory_id, namespace, include_deleted=False)
     if touch:
         memory.last_accessed_at = utcnow()
+        memory.access_count = (memory.access_count or 0) + 1
+        importance_service.recompute(memory)  # frequency/recency just changed
         db.commit()
         db.refresh(memory)
     return memory
@@ -104,6 +107,7 @@ def update(
     if not changes:
         return memory  # no-op: nothing to audit
 
+    importance_service.recompute(memory)  # metadata may carry an explicit signal
     audit_service.record(
         db,
         memory_id=memory.id,
@@ -161,12 +165,17 @@ def list_memories(
     limit: int = 50,
     offset: int = 0,
 ) -> tuple[list[Memory], int]:
-    """List memories in a namespace. Excludes deleted unless `state` is given."""
+    """List memories in a namespace.
+
+    Without an explicit `state`, returns only `active` memories — the default
+    retrieval set. Lifecycle by-products (consolidated/decayed/archived/deleted)
+    are reachable only by passing `state` explicitly (12-memory-model).
+    """
     filters = [Memory.namespace == namespace]
     if state is not None:
         filters.append(Memory.state == state)
     else:
-        filters.append(Memory.state != MemoryState.deleted.value)
+        filters.append(Memory.state == MemoryState.active.value)
     if type_ is not None:
         filters.append(Memory.type == type_)
 

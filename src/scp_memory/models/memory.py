@@ -6,7 +6,7 @@ phases) are derived from it.
 
 from datetime import datetime
 
-from sqlalchemy import JSON, DateTime, Float, Index, String, Text
+from sqlalchemy import JSON, DateTime, Float, Index, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from scp_memory.db.base import Base
@@ -22,8 +22,10 @@ class Memory(Base):
     content: Mapped[str] = mapped_column(Text, nullable=False)
     type: Mapped[str] = mapped_column(String, nullable=False, default=MemoryType.fact.value)
     state: Mapped[str] = mapped_column(String, nullable=False, default=MemoryState.active.value)
-    # Derived in Phase 2; null until then.
+    # Derived importance in [0, 1] (Phase 2). Set at create, refreshed on access.
     importance: Mapped[float | None] = mapped_column(Float, nullable=True)
+    # Access frequency signal for importance scoring (Phase 2).
+    access_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     namespace: Mapped[str] = mapped_column(String, nullable=False)
     # `metadata` is reserved on the declarative class, so the attribute is `meta`.
     meta: Mapped[dict] = mapped_column("metadata", JSON, nullable=False, default=dict)

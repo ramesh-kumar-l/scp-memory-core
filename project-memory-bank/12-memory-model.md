@@ -1,6 +1,6 @@
 # 12 — Memory Model
 
-**Status:** Design intent · **Primary target:** Phase 1 (entity) + Phase 2 (lifecycle) · **Last updated:** 2026-06-20
+**Status:** Implemented (Phases 1–2) · **Last updated:** 2026-06-20
 
 Defines the Memory entity, its states, and lifecycle. Schema in
 [11-data-models](11-data-models.md); concepts in [04-domain-model](04-domain-model.md).
@@ -38,7 +38,10 @@ created ──score/dedup──▶ active ──consolidate──▶ consolidate
 
 - **Importance scoring** — recency + frequency + explicit signals → `importance`.
   See [14-ranking-model](14-ranking-model.md) for how importance feeds ranking.
-- **Deduplication** — detect near-duplicates (semantic + metadata) and merge.
+- **Deduplication** — detect near-duplicates and merge. *Implemented lexically*
+  (token-set Jaccard, per type+namespace); semantic/embedding similarity arrives
+  with the vector store in Phase 3. The merged duplicate is archived with a
+  `supersedes` edge to the canonical.
 - **Consolidation** — combine related memories into a `summary`, recording
   `derived_from` provenance.
 - **Decay** — reduce importance over time; transition to `decayed` below a

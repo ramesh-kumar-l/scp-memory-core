@@ -4,32 +4,43 @@
 
 > Doubles as the project's **active-context** save state (05 working agreement).
 
-## Active Phase: 1 — Memory Core ✅ complete (awaiting approval for Phase 2)
+## Active Phase: 2 — Memory Intelligence ✅ complete (awaiting approval for Phase 3)
 
 ### Goal
-Durable, auditable CRUD over memories — the foundation every later phase extends.
+Memory that manages itself: importance scoring, deduplication, consolidation,
+and decay — the self-management layer over Phase 1's audited CRUD.
 
 ### Deliverables
-- [x] Project skeleton: pyproject, src layout, ruff/black/pytest, CI
-- [x] SQLAlchemy models: `memories`, `provenance`, `audit_events`, `memory_relations`
-- [x] Memory service: create/read/update/delete with namespacing
-- [x] Audit trail: append-only event emitted atomically on every mutation
-- [x] FastAPI endpoints for CRUD + `/{id}/audit` (+ `/health`, `/metrics`)
-- [x] Tests (unit + integration + benchmark seed), metrics, logging, docs, examples
+- [x] Importance scoring (recency + frequency + explicit signal → `importance` in [0,1])
+- [x] Deduplication (lexical Jaccard; archive non-canonical + `supersedes` edges)
+- [x] Consolidation (summary memory + `derived_from` edges; sources → `consolidated`)
+- [x] Decay (recompute over namespace; below-threshold `active` → `decayed`)
+- [x] First `memory_relations` write paths (`relation_service`)
+- [x] Intelligence API (`/v1/intelligence/decay|dedup|consolidate`); importance on every read
+- [x] Tests (unit pure-logic + per-service + integration), metrics, logging, docs, example
 
 ### Exit Criteria (all met)
-- 18 tests passing; ruff + black clean.
-- Every mutation audited; provenance always recorded; soft/hard delete governed.
+- 46 tests passing (+ benchmark seed); ruff + black clean.
+- Every transition audited; provenance preserved; lifecycle states honoured.
+- Strict modularity: longest source file 192 lines (none > 300).
 - Quality gates satisfied ([05-engineering-principles](05-engineering-principles.md)).
 
 ### Status
-**Complete** (pending user confirmation). Awaiting approval to start Phase 2.
+**Complete** (pending user confirmation). Awaiting approval to start Phase 3.
+
+### Key decisions
+- Similarity is **lexical** (token-set Jaccard) in Phase 2; semantic/embedding
+  dedup arrives with the vector store in Phase 3. Merge logic is scorer-agnostic.
+- New `Memory.access_count` column feeds the frequency signal.
+- `GET /v1/memories` default now returns **active only**; lifecycle by-products
+  reachable via explicit `state` filter.
+- Added `AuditAction.deduplicate`. Version bumped 0.1.0 → 0.2.0.
 
 ---
 
 ## ⛔ Stop Rule (operating model)
 
-> One phase is active at a time. **Do NOT begin Phase 2 (Memory Intelligence)
+> One phase is active at a time. **Do NOT begin Phase 3 (Hybrid Retrieval)
 > without explicit user approval.** Never work ahead or skip phases.
 
 At the end of any phase: update `07`, `08`, `28`, then **stop** and wait for
@@ -37,10 +48,9 @@ explicit instruction.
 
 ## Next Phase (do not start yet)
 
-**Phase 2 — Memory Intelligence:** importance scoring, deduplication,
-consolidation, decay. Scoped in [09-backlog](09-backlog.md). All quality gates
-apply. Builds on the `memory_relations` table and lifecycle states already
-defined in Phase 1.
+**Phase 3 — Hybrid Retrieval:** keyword + vector (Qdrant) + metadata retrieval and
+a ranking engine that consumes the `importance` signal produced here. Scoped in
+[09-backlog](09-backlog.md).
 
 ## Related
 

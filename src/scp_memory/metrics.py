@@ -10,6 +10,12 @@ MEMORIES_CREATED = Counter("scp_memories_created_total", "Memories created.")
 MEMORIES_UPDATED = Counter("scp_memories_updated_total", "Memories updated.")
 MEMORIES_DELETED = Counter("scp_memories_deleted_total", "Memories deleted.", ["mode"])
 AUDIT_EVENTS = Counter("scp_audit_events_total", "Audit events recorded.", ["action"])
+# Memory intelligence (Phase 2).
+MEMORIES_DECAYED = Counter("scp_memories_decayed_total", "Memories transitioned to decayed.")
+MEMORIES_DEDUPED = Counter("scp_memories_deduped_total", "Duplicate memories merged/archived.")
+MEMORIES_CONSOLIDATED = Counter(
+    "scp_memories_consolidated_total", "Summary memories produced by consolidation."
+)
 API_REQUEST_DURATION = Histogram(
     "scp_api_request_duration_seconds",
     "API request latency in seconds.",

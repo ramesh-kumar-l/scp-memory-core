@@ -32,6 +32,7 @@ class AuditAction(StrEnum):
     delete = "delete"
     consolidate = "consolidate"  # Phase 2
     decay = "decay"  # Phase 2
+    deduplicate = "deduplicate"  # Phase 2
 
 
 class RelationType(StrEnum):

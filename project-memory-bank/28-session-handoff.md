@@ -5,47 +5,54 @@
 ## Last Session Summary
 
 **Date:** 2026-06-20
-**Goal:** Implement Phase 1 — Memory Core (durable, audited CRUD).
+**Goal:** Implement Phase 2 — Memory Intelligence (importance, dedup,
+consolidation, decay).
 
 ### What was done
-- Built the `scp_memory` package (src layout, strict modularity, every file
-  < 300 lines): models, services, FastAPI API, db/config/logging/metrics.
-- Memory CRUD with **namespacing**; **append-only audit** emitted atomically with
-  each mutation; provenance always recorded; **governed delete** (soft default,
-  hard for erasure) with audit retained.
-- Endpoints: `POST/GET/PATCH/DELETE /v1/memories`, `GET /v1/memories`,
-  `GET /v1/memories/{id}/audit`, plus `/health` and `/metrics`.
-- Observability: Prometheus metrics + structured JSON logs (no memory content).
-- Tests: unit + integration + benchmark seed — **18 passing**; ruff + black clean.
-- Tooling/docs: `pyproject.toml`, GitHub Actions CI, `docs/phase-1-memory-core.md`,
-  `examples/quickstart.py` (verified end-to-end).
+- **Importance scoring:** pure math in `intelligence/scoring.py` (recency +
+  frequency + explicit), applied via `services/importance_service.py`. Set at
+  create, refreshed on access, recomputed during decay. Added `Memory.access_count`.
+- **Deduplication:** `services/dedup_service.py` clusters same-type active
+  memories by lexical Jaccard (`intelligence/similarity.py`), keeps a canonical,
+  archives the rest, writes `supersedes` edges.
+- **Consolidation:** `services/consolidation_service.py` builds a `summary`
+  memory, marks sources `consolidated`, writes `derived_from` edges, keeps
+  provenance (source IDs).
+- **Decay:** `services/decay_service.py` recomputes importance over a namespace,
+  transitions below-threshold `active` → `decayed`.
+- **Graph:** `services/relation_service.py` — first `memory_relations` writes.
+- **API:** `/v1/intelligence/{decay,dedup,consolidate}`; `importance` +
+  `access_count` on every `MemoryRead`.
+- **Tests:** 46 passing (pure-logic unit + per-service + integration);
+  ruff + black clean. Docs + `examples/intelligence_quickstart.py` (verified).
 
 ### Decisions / notes
-- `Memory.meta` (DB column `metadata`) — avoids the reserved declarative name;
-  exposed as `metadata` in the API.
-- `audit_events.memory_id` is deliberately **not** a FK, so audit survives a hard
-  delete (16-security-model).
-- Enums use `StrEnum` (py311+). New memories start in `active` (the `created`
-  pre-scoring state is a Phase-2 concern).
+- Similarity is **lexical** in Phase 2; embedding-based semantic dedup is Phase 3.
+  Dedup merge logic is scorer-agnostic so the swap is clean.
+- `GET /v1/memories` default now returns **active only** (lifecycle by-products
+  via explicit `state`). Added `AuditAction.deduplicate`. Version → 0.2.0.
+- No DB migrations yet (SQLite MVP, `create_all`): the new `access_count` column
+  lands on fresh installs; Alembic is a cross-cutting backlog item before Postgres.
 
 ### State
-- Phase 1 **complete**, pending confirmation. No commit made yet.
+- Phase 2 **complete**, pending confirmation. No commit made yet (Phase 1 + 2
+  both uncommitted on `master`).
 
 ## Where to Resume
 
-**Next:** Phase 2 — Memory Intelligence (importance scoring, deduplication,
-consolidation, decay). See [09-backlog](09-backlog.md) Phase 2 section.
+**Next:** Phase 3 — Hybrid Retrieval (keyword + vector + metadata + ranking).
+See [09-backlog](09-backlog.md) Phase 3 section.
 
-> **Do not start Phase 2 without explicit approval** ([08-active-phase](08-active-phase.md)).
+> **Do not start Phase 3 without explicit approval** ([08-active-phase](08-active-phase.md)).
 
 ## First Actions Next Session
 1. Read `07`, `08`, `28` (this file).
-2. Confirm Phase 1 acceptance / get approval to begin Phase 2.
-3. If approved, follow the Phase 2 backlog with all quality gates.
+2. Confirm Phase 2 acceptance / get approval to begin Phase 3.
+3. If approved, follow the Phase 3 backlog with all quality gates.
 
 ## Open Questions for User
-- Approve Phase 1 and authorize Phase 2?
-- Commit the Phase 1 code now? (nothing has been committed yet)
+- Approve Phase 2 and authorize Phase 3?
+- Commit the Phase 1 + Phase 2 code now? (nothing has been committed yet)
 
 ## Related
 
