@@ -2,43 +2,45 @@
 
 **Last updated:** 2026-06-20 · **Read this first, every session.**
 
-## Active Phase: 0 — Project Foundation
+> Doubles as the project's **active-context** save state (05 working agreement).
+
+## Active Phase: 1 — Memory Core ✅ complete (awaiting approval for Phase 2)
 
 ### Goal
-Establish the shared source of truth (memory bank) and lock foundational
-decisions, so all later work builds on a stable, justified base.
+Durable, auditable CRUD over memories — the foundation every later phase extends.
 
 ### Deliverables
-- [x] Vision & thesis ([01](01-product-vision.md), [02](02-product-thesis.md))
-- [x] Project charter ([00](00-project-charter.md))
-- [x] System architecture ([03](03-system-architecture.md))
-- [x] Domain model ([04](04-domain-model.md))
-- [x] ADRs — stack locked & Accepted ([25](25-adr-log.md), [06](06-technical-decisions.md))
-- [x] Full memory bank scaffold (29 files, `00`–`28`)
+- [x] Project skeleton: pyproject, src layout, ruff/black/pytest, CI
+- [x] SQLAlchemy models: `memories`, `provenance`, `audit_events`, `memory_relations`
+- [x] Memory service: create/read/update/delete with namespacing
+- [x] Audit trail: append-only event emitted atomically on every mutation
+- [x] FastAPI endpoints for CRUD + `/{id}/audit` (+ `/health`, `/metrics`)
+- [x] Tests (unit + integration + benchmark seed), metrics, logging, docs, examples
 
 ### Exit Criteria (all met)
-- All 29 memory bank files exist with real content.
-- Stack locked as Accepted ADRs.
-- `07`, `08`, `28` accurate and current.
+- 18 tests passing; ruff + black clean.
+- Every mutation audited; provenance always recorded; soft/hard delete governed.
+- Quality gates satisfied ([05-engineering-principles](05-engineering-principles.md)).
 
 ### Status
-**Complete** (pending user confirmation). Awaiting approval to start Phase 1.
+**Complete** (pending user confirmation). Awaiting approval to start Phase 2.
 
 ---
 
 ## ⛔ Stop Rule (operating model)
 
-> One phase is active at a time. **Do NOT begin Phase 1 (Memory Core) without
-> explicit user approval.** Never work ahead or skip phases.
+> One phase is active at a time. **Do NOT begin Phase 2 (Memory Intelligence)
+> without explicit user approval.** Never work ahead or skip phases.
 
 At the end of any phase: update `07`, `08`, `28`, then **stop** and wait for
 explicit instruction.
 
 ## Next Phase (do not start yet)
 
-**Phase 1 — Memory Core:** Memory entity model, storage layer, CRUD APIs, audit
-trail. Scoped in [09-backlog](09-backlog.md). All quality gates apply
-([05-engineering-principles](05-engineering-principles.md)).
+**Phase 2 — Memory Intelligence:** importance scoring, deduplication,
+consolidation, decay. Scoped in [09-backlog](09-backlog.md). All quality gates
+apply. Builds on the `memory_relations` table and lifecycle states already
+defined in Phase 1.
 
 ## Related
 

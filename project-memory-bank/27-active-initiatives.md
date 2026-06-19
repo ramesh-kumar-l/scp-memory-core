@@ -9,15 +9,16 @@ Cross-cutting initiatives currently in flight. Distinct from the single active
 
 | Initiative | Status | Notes |
 |---|---|---|
-| **Phase 0 — Project Foundation** | In progress | Building the full memory bank + locking the stack. Nearly complete. |
+| — | — | No active initiative; awaiting approval to start Phase 2. |
 
 ## Queued (not started)
 
-- Phase 1 — Memory Core (pending explicit approval to begin)
+- Phase 2 — Memory Intelligence (pending explicit approval to begin)
 
 ## Done
 
-- (none yet)
+- **Phase 0 — Project Foundation** (2026-06-20): full memory bank + locked stack.
+- **Phase 1 — Memory Core** (2026-06-20): audited, namespaced CRUD; 18 tests; CI.
 
 ## Related
 

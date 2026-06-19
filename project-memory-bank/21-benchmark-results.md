@@ -28,11 +28,18 @@ this file. No code exists yet, so there are no measurements.
 ## Results
 
 ### Phase 0 — Foundation
-n/a — no executable code. Baselines captured starting Phase 1.
+n/a — no executable code.
+
+### Phase 1 — Memory Core (seed)
+A self-contained latency seed exists at `tests/benchmark/test_crud_benchmark.py`
+(stdlib timing, opt-in via `pytest -m benchmark`). It guards `create` average
+latency under a generous CI ceiling; precise percentiles per endpoint are
+captured here at the next public-build milestone (proper harness + fixed env).
 
 | Milestone | Metric | Value | Notes |
 |---|---|---|---|
 | Phase 0 | — | — | No code yet |
+| Phase 1 | create p_avg | ceiling < 50 ms/op | In-memory SQLite seed; regression guard only |
 
 ## Related
 

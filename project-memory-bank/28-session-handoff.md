@@ -5,40 +5,47 @@
 ## Last Session Summary
 
 **Date:** 2026-06-20
-**Goal:** Bootstrap Phase 0 — create the full memory bank and lock the stack.
+**Goal:** Implement Phase 1 — Memory Core (durable, audited CRUD).
 
 ### What was done
-- Created `project-memory-bank/` with **all 29 files** (`00`–`28`), populated with
-  real Phase 0 content (not placeholders), plus a `README.md` index.
-- **Locked the recommended stack** as Accepted ADRs (ADR-001…010) in
-  [25-adr-log](25-adr-log.md); narrative in [06-technical-decisions](06-technical-decisions.md).
-- Wrote design-intent docs for architecture, domain, retrieval, ranking, trust,
-  security, observability, testing, and UI.
+- Built the `scp_memory` package (src layout, strict modularity, every file
+  < 300 lines): models, services, FastAPI API, db/config/logging/metrics.
+- Memory CRUD with **namespacing**; **append-only audit** emitted atomically with
+  each mutation; provenance always recorded; **governed delete** (soft default,
+  hard for erasure) with audit retained.
+- Endpoints: `POST/GET/PATCH/DELETE /v1/memories`, `GET /v1/memories`,
+  `GET /v1/memories/{id}/audit`, plus `/health` and `/metrics`.
+- Observability: Prometheus metrics + structured JSON logs (no memory content).
+- Tests: unit + integration + benchmark seed — **18 passing**; ruff + black clean.
+- Tooling/docs: `pyproject.toml`, GitHub Actions CI, `docs/phase-1-memory-core.md`,
+  `examples/quickstart.py` (verified end-to-end).
 
-### Decisions locked
-- Stack: Python 3.11+, FastAPI, Pydantic v2, SQLAlchemy 2.x, SQLite (MVP) →
-  PostgreSQL (scale), Qdrant (vectors), NetworkX (graph; Neo4j optional later),
-  OpenTelemetry + Prometheus + Grafana, Pytest.
-- Scope confirmed with user: full memory bank scaffold; stack locked as decided.
+### Decisions / notes
+- `Memory.meta` (DB column `metadata`) — avoids the reserved declarative name;
+  exposed as `metadata` in the API.
+- `audit_events.memory_id` is deliberately **not** a FK, so audit survives a hard
+  delete (16-security-model).
+- Enums use `StrEnum` (py311+). New memories start in `active` (the `created`
+  pre-scoring state is a Phase-2 concern).
 
 ### State
-- No application code yet. Phase 0 complete pending confirmation.
+- Phase 1 **complete**, pending confirmation. No commit made yet.
 
 ## Where to Resume
 
-**Next:** Phase 1 — Memory Core (entity model, storage layer, CRUD APIs, audit
-trail). See [09-backlog](09-backlog.md) Phase 1 section.
+**Next:** Phase 2 — Memory Intelligence (importance scoring, deduplication,
+consolidation, decay). See [09-backlog](09-backlog.md) Phase 2 section.
 
-> **Do not start Phase 1 without explicit approval** ([08-active-phase](08-active-phase.md)).
+> **Do not start Phase 2 without explicit approval** ([08-active-phase](08-active-phase.md)).
 
 ## First Actions Next Session
 1. Read `07`, `08`, `28` (this file).
-2. Confirm Phase 0 acceptance / get approval to begin Phase 1.
-3. If approved, follow the Phase 1 backlog with all quality gates.
+2. Confirm Phase 1 acceptance / get approval to begin Phase 2.
+3. If approved, follow the Phase 2 backlog with all quality gates.
 
 ## Open Questions for User
-- Approve Phase 0 and authorize Phase 1?
-- Any changes to the locked stack before Phase 1?
+- Approve Phase 1 and authorize Phase 2?
+- Commit the Phase 1 code now? (nothing has been committed yet)
 
 ## Related
 

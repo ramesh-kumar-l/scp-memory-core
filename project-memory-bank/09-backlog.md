@@ -5,15 +5,15 @@
 Ordered by phase. **No items are pulled into active work** until the relevant
 phase is approved. The active phase is tracked in [08-active-phase](08-active-phase.md).
 
-## Phase 1 — Memory Core (next, pending approval)
-- [ ] Project skeleton: pyproject, package layout, tooling (ruff/black, pytest), CI
-- [ ] SQLAlchemy models: `memories`, `provenance`, `audit_events`, `memory_relations`
-- [ ] Memory service: create/read/update/delete with namespacing
-- [ ] Audit trail: append-only event emission on every mutation
-- [ ] FastAPI endpoints for CRUD + `/audit`
-- [ ] Tests (unit + integration), metrics, logging, docs, examples, benchmark seed
+## Phase 1 — Memory Core ✅ complete (2026-06-20)
+- [x] Project skeleton: pyproject, package layout, tooling (ruff/black, pytest), CI
+- [x] SQLAlchemy models: `memories`, `provenance`, `audit_events`, `memory_relations`
+- [x] Memory service: create/read/update/delete with namespacing
+- [x] Audit trail: append-only event emission on every mutation
+- [x] FastAPI endpoints for CRUD + `/audit`
+- [x] Tests (unit + integration), metrics, logging, docs, examples, benchmark seed
 
-## Phase 2 — Memory Intelligence
+## Phase 2 — Memory Intelligence (next, pending approval)
 - [ ] Importance scoring (recency, frequency, explicit signals)
 - [ ] Deduplication (semantic + metadata)
 - [ ] Consolidation (summary memories with `derived_from`)

@@ -33,8 +33,9 @@ for the current phase.
 
 ## Current Position
 
-Phase 0 in progress. No application code yet. Next: Phase 1 (Memory Core), to
-begin **only after explicit approval**.
+Phases 0–1 complete. Memory Core (audited, namespaced CRUD) is shipped and
+tested. Next: Phase 2 (Memory Intelligence), to begin **only after explicit
+approval**.
 
 ## Related
 
