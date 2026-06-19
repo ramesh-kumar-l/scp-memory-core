@@ -4,60 +4,61 @@
 
 > Doubles as the project's **active-context** save state (05 working agreement).
 
-## Active Phase: 3 — Hybrid Retrieval ✅ complete (awaiting approval for Phase 4)
+## Active Phase: 4 — Trust Layer ✅ complete (awaiting approval for Phase 5)
 
 ### Goal
-Relevant recall across signals: keyword (lexical) + vector (semantic) + metadata
-retrieval, fused by a ranking engine that consumes the Phase-2 `importance`
-signal — with **explainable** per-signal scores on every result.
+Trustworthy, explainable recall: attach provenance quality, confidence
+(corroboration/contradiction), and type-aware freshness to every retrieved
+memory; fold a composite **trust** score into ranking; and emit a human-readable
+explanation — no black boxes.
 
 ### Deliverables
-- [x] Embeddings: pure `HashingEmbedder` + cosine behind an `Embedder` protocol
-- [x] Keyword retrieval: pure Okapi BM25 over metadata-filtered candidates
-- [x] Vector backend seam: `BruteForceBackend` (default) + optional Qdrant adapter
-- [x] Fusion: weighted-linear (default, explainable) + RRF; importance as a signal
-- [x] Orchestration (`retrieval_service`): filter → keyword ∪ vector → fuse → rank
-- [x] Retrieval touches returned hits (feeds Phase-2 importance/decay loop)
-- [x] API (`POST /v1/retrieval/search`) with explainable signals + weights
+- [x] Pure `trust/` package: provenance, freshness, confidence, score, explain, config
+- [x] `trust_service` (DB-aware, no writes): per-memory verdict + namespace neighbours
+- [x] Trust folded into ranking fusion as a 4th weighted dimension (`weights.trust`)
+- [x] Results carry `signals.trust` + a full `trust` breakdown + explanation
+- [x] `min_confidence` filter on search (filtered, never silently hidden)
+- [x] Explain endpoint `GET /v1/trust/{memory_id}`
 - [x] Tests (pure unit + service + integration), metrics, logging, docs, example
 
 ### Exit Criteria (all met)
-- 70 tests passing (+ benchmark seed); ruff + black clean.
-- Every result is explainable (per-signal scores + weights); namespace-isolated.
-- Strict modularity: longest source file 192 lines (none > 300; longest new 134).
+- 86 tests passing (+ benchmark seed); ruff + black clean.
+- Every result carries a decomposable trust verdict + plain-language explanation;
+  namespace-isolated.
+- Strict modularity: longest source file 192 lines (none > 300; longest new 162).
 - Quality gates satisfied ([05-engineering-principles](05-engineering-principles.md)).
 
 ### Status
-**Complete** (pending user confirmation). Awaiting approval to start Phase 4.
+**Complete** (pending user confirmation). Awaiting approval to start Phase 5.
 
 ### Key decisions
-- **Embedder is a deterministic stand-in.** `HashingEmbedder` gives semantic-shaped
-  vectors driven by shared tokens/hash buckets, not true meaning — chosen for
-  zero-infra, hermetic, reproducible runs. A real model drops in behind the
-  `Embedder` protocol with no change to retrieval/ranking.
-- **Two vector backends behind one seam.** In-process brute-force is the tested
-  default; Qdrant (`SCP_VECTOR_BACKEND=qdrant`, `[vector]` extra) is the
-  integration-only scale path, not covered by CI.
-- **Default fusion = weighted-linear** (matches the explainability contract); RRF
-  available. Keyword/vector signals normalized per result set; importance absolute.
-- Retrieval **mutates on read** (touch top-k) by design (13-retrieval-model).
-- Version bumped 0.2.0 → 0.3.0.
+- **Corroboration/contradiction are lexical stand-ins** (token-overlap Jaccard +
+  negation-polarity divergence), mirroring the Phase-3 embedder honesty pattern —
+  hermetic and swappable for semantic NLI behind `trust_service`, no contract change.
+- **Confidence has a provenance floor**: corroboration closes the gap to 1.0, so a
+  user-stated memory (provenance 1.0) is already at the ceiling — corroboration
+  lifts *lower-provenance* memories. Contradiction subtracts a fixed penalty.
+- **Freshness is type-aware** (preference 180d half-life ≫ event 14d); stale
+  memories are down-weighted, never deleted.
+- **Trust enters ranking as an extra weighted dimension.** Phase-4 default weights:
+  keyword 0.35 / vector 0.35 / importance 0.1 / trust 0.2. `weighted_fuse` keeps
+  trust optional so Phase-3 callers are unchanged.
+- Version bumped 0.3.0 → 0.4.0. No DB migrations (trust reads existing columns).
 
 ---
 
 ## ⛔ Stop Rule (operating model)
 
-> One phase is active at a time. **Do NOT begin Phase 4 (Trust Layer) without
-> explicit user approval.** Never work ahead or skip phases.
+> One phase is active at a time. **Do NOT begin Phase 5 (SDK) without explicit
+> user approval.** Never work ahead or skip phases.
 
 At the end of any phase: update `07`, `08`, `28`, then **stop** and wait for
 explicit instruction.
 
 ## Next Phase (do not start yet)
 
-**Phase 4 — Trust Layer:** provenance quality, confidence (corroboration/
-contradiction), freshness, and explainability output — layered onto the retrieval
-results produced here. Scoped in [09-backlog](09-backlog.md).
+**Phase 5 — SDK:** Python + TypeScript clients covering the full API surface
+(CRUD, intelligence, retrieval, trust). Scoped in [09-backlog](09-backlog.md).
 
 ## Related
 

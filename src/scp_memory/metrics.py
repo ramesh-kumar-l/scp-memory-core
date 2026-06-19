@@ -18,6 +18,8 @@ MEMORIES_CONSOLIDATED = Counter(
 )
 # Hybrid retrieval (Phase 3).
 RETRIEVAL_QUERIES = Counter("scp_retrieval_queries_total", "Retrieval queries served.", ["mode"])
+# Trust layer (Phase 4).
+TRUST_EVALUATIONS = Counter("scp_trust_evaluations_total", "Standalone trust explanations served.")
 API_REQUEST_DURATION = Histogram(
     "scp_api_request_duration_seconds",
     "API request latency in seconds.",

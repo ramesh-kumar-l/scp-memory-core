@@ -22,9 +22,15 @@ def test_hybrid_retrieval_ranks_relevant_first(db):
 
     assert results
     assert "dark mode" in results[0].memory.content
-    # explainability contract: every signal is present.
-    assert set(results[0].signals.keys()) == {"keyword", "vector", "metadata", "importance"}
-    assert set(results[0].weights.keys()) == {"keyword", "vector", "importance"}
+    # explainability contract: every signal is present (trust added in Phase 4).
+    assert set(results[0].signals.keys()) == {
+        "keyword",
+        "vector",
+        "metadata",
+        "importance",
+        "trust",
+    }
+    assert set(results[0].weights.keys()) == {"keyword", "vector", "importance", "trust"}
 
 
 def test_namespace_isolation(db):

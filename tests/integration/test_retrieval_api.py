@@ -23,8 +23,17 @@ def test_search_returns_explainable_ranked_results(client):
     assert body["count"] >= 1
     top = body["results"][0]
     assert "dark mode" in top["memory"]["content"]
-    assert set(top["signals"]) == {"keyword", "vector", "metadata", "importance"}
+    assert set(top["signals"]) == {"keyword", "vector", "metadata", "importance", "trust"}
     assert 0.0 <= top["score"] <= 1.0
+    # Phase 4: every result carries an explainable trust verdict.
+    assert set(top["trust"]) == {
+        "provenance_quality",
+        "confidence",
+        "freshness",
+        "score",
+        "explanation",
+    }
+    assert top["trust"]["explanation"]
 
 
 def test_search_respects_namespace(client):

@@ -1,6 +1,6 @@
 # 15 — Trust Model
 
-**Status:** Design intent · **Primary target:** Phase 4 · **Last updated:** 2026-06-20
+**Status:** Implemented (Phase 4) · **Last updated:** 2026-06-20
 
 Trust is a **first-class, retrievable dimension**, not an afterthought. The trust
 layer makes recall trustworthy and explainable. It augments ranking
@@ -52,6 +52,25 @@ layer makes recall trustworthy and explainable. It augments ranking
 
 - Depends on Phase 1 (provenance, audit), Phase 2 (importance/freshness inputs),
   Phase 3 (ranking to augment). Delivered in Phase 4.
+
+## Implementation Notes (Phase 4)
+
+- Pure scorers in `scp_memory.trust` (`provenance`, `freshness`, `confidence`,
+  `score`, `explain`); DB-aware `services.trust_service` (no writes).
+- **Provenance quality** maps `Provenance.source` (user/explicit 1.0 → consolidation
+  0.75 → inferred 0.5 → system 0.4; unknown = neutral 0.5).
+- **Confidence** = provenance floor, corroboration closes the gap to 1.0
+  (saturating), each contradiction subtracts a fixed penalty. Corroboration/
+  contradiction are **lexical stand-ins**: same-type neighbour token-overlap
+  (Jaccard ≥ 0.5) with matching vs. divergent negation polarity. Swappable for
+  semantic NLI behind the same service contract.
+- **Freshness** is type-aware exponential decay (preference 180d ≫ event 14d).
+- **Trust** enters ranking fusion as a 4th weighted dimension (default 0.2);
+  results carry the full breakdown + a one-sentence explanation. `min_confidence`
+  filters low-trust results (filtered, never silently hidden).
+- Endpoint `GET /v1/trust/{memory_id}` returns the standalone breakdown.
+- **Deferred:** semantic corroboration (NLI), trust calibration on a fixed eval
+  set, multi-hop provenance-graph quality.
 
 ## Related
 

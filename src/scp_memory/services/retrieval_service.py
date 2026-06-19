@@ -12,7 +12,7 @@ import logging
 from dataclasses import dataclass
 
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from scp_memory.intelligence.similarity import tokenize
 from scp_memory.metrics import RETRIEVAL_QUERIES
@@ -23,7 +23,8 @@ from scp_memory.retrieval.embedding import HashingEmbedder
 from scp_memory.retrieval.fusion import weighted_fuse
 from scp_memory.retrieval.keyword import bm25_scores
 from scp_memory.schemas.retrieval import RetrieveRequest
-from scp_memory.services import importance_service
+from scp_memory.services import importance_service, trust_service
+from scp_memory.services.trust_service import TrustResult
 from scp_memory.services.vector_backend import get_backend
 from scp_memory.utils.time import utcnow
 
@@ -35,12 +36,13 @@ _EMBEDDER = HashingEmbedder(dim=_CONFIG.embedding_dim)
 
 @dataclass
 class RankedMemory:
-    """A retrieved memory with its fused score and explainable per-signal scores."""
+    """A retrieved memory with its fused score, per-signal scores, and trust verdict."""
 
     memory: Memory
     score: float
     signals: dict[str, float]
     weights: dict[str, float]
+    trust: TrustResult
 
 
 def _candidates(
@@ -52,6 +54,7 @@ def _candidates(
     return list(
         db.scalars(
             select(Memory)
+            .options(selectinload(Memory.provenance))  # avoid N+1 in trust scoring
             .where(*filters)
             .order_by(Memory.importance.desc(), Memory.created_at.desc())
             .limit(limit)
@@ -109,14 +112,23 @@ def search(db: Session, req: RetrieveRequest, *, touch: bool = True) -> list[Ran
     vector = [vscore.get(m.id, 0.0) for m in items]
     importance = [m.importance or 0.0 for m in items]
 
+    # Trust layer (Phase 4): provenance/confidence/freshness per candidate, fused
+    # as an extra ranking dimension and carried on each result for explainability.
+    trust_results = trust_service.evaluate_all(items)
+    trust = [t.score for t in trust_results]
+
     weights = {
         "keyword": _CONFIG.weights.keyword,
         "vector": _CONFIG.weights.vector,
         "importance": _CONFIG.weights.importance,
+        "trust": _CONFIG.weights.trust,
     }
     ranked: list[RankedMemory] = []
-    for memory, (score, parts) in zip(
-        items, weighted_fuse(keyword, vector, importance, _CONFIG.weights), strict=True
+    for memory, t_result, (score, parts) in zip(
+        items,
+        trust_results,
+        weighted_fuse(keyword, vector, importance, _CONFIG.weights, trust=trust),
+        strict=True,
     ):
         ranked.append(
             RankedMemory(
@@ -124,8 +136,12 @@ def search(db: Session, req: RetrieveRequest, *, touch: bool = True) -> list[Ran
                 score=round(score, 4),
                 signals={**parts, "metadata": 1.0},
                 weights=weights,
+                trust=t_result,
             )
         )
+
+    if req.min_confidence is not None:
+        ranked = [r for r in ranked if r.trust.confidence >= req.min_confidence]
 
     ranked.sort(key=lambda r: (r.score, r.memory.importance or 0.0), reverse=True)
     top = ranked[: min(req.k, _CONFIG.max_k)]

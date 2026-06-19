@@ -1,6 +1,6 @@
 # 14 — Ranking Model
 
-**Status:** Implemented (Phase 3; + trust in Phase 4) · **Last updated:** 2026-06-20
+**Status:** Implemented (Phase 3 + trust in Phase 4) · **Last updated:** 2026-06-20
 
 How retrieved candidates are scored and ordered. Ranking consumes the candidate
 set from retrieval ([13-retrieval-model](13-retrieval-model.md)) and produces an
@@ -27,8 +27,11 @@ single ordering. Two candidate methods (decided in Phase 3 via benchmarks):
 - **Reciprocal Rank Fusion (RRF)** over per-signal ranked lists (robust to scale
   differences).
 
-Phase 3 ranks on relevance + importance. Phase 4 adds trust as additional
-weighted dimensions.
+Phase 3 ranks on relevance + importance. Phase 4 adds **trust** as an additional
+weighted dimension (default weights: keyword 0.35 / vector 0.35 / importance 0.1 /
+trust 0.2). The fused trust score is a composite of provenance/confidence/freshness
+([15-trust-model](15-trust-model.md)); each result also carries the full trust
+breakdown and a plain-language explanation.
 
 ## Explainability Contract
 

@@ -14,6 +14,7 @@ from scp_memory.schemas.retrieval import (
     RetrieveRequest,
     RetrieveResponse,
     SignalScores,
+    TrustBreakdown,
 )
 from scp_memory.services import retrieval_service
 
@@ -34,6 +35,13 @@ def search(payload: RetrieveRequest, db: Session = Depends(get_db)) -> RetrieveR
                 score=r.score,
                 signals=SignalScores(**r.signals),
                 weights=r.weights,
+                trust=TrustBreakdown(
+                    provenance_quality=r.trust.provenance_quality,
+                    confidence=r.trust.confidence,
+                    freshness=r.trust.freshness,
+                    score=r.trust.score,
+                    explanation=r.trust.explanation,
+                ),
             )
             for r in ranked
         ],

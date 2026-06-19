@@ -1,3 +1,3 @@
-"""SCP Memory Engine — Memory Core package (Phase 1–3)."""
+"""SCP Memory Engine — Memory Core package (Phase 1–4)."""
 
-__version__ = "0.3.0"
+__version__ = "0.4.0"

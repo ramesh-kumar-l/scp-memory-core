@@ -28,13 +28,17 @@ phase is approved. The active phase is tracked in [08-active-phase](08-active-ph
   Qdrant in CI; FTS5/`tsvector` inverted index; weighted-vs-RRF benchmark on a
   fixed eval set
 
-## Phase 4 — Trust Layer (next, pending approval)
-- [ ] Provenance quality scoring
-- [ ] Confidence (corroboration/contradiction)
-- [ ] Freshness (type-aware)
-- [ ] Explainability output + explain endpoint
+## Phase 4 — Trust Layer ✅ complete (2026-06-20)
+- [x] Provenance quality scoring (source → quality)
+- [x] Confidence (provenance floor + corroboration boost − contradiction penalty)
+- [x] Freshness (type-aware half-lives)
+- [x] Explainability output + explain endpoint (`GET /v1/trust/{memory_id}`)
+- [x] Trust folded into ranking fusion; `min_confidence` filter on search
+- [ ] *Deferred to production hardening:* semantic corroboration/contradiction
+  (NLI) behind `trust_service`; trust calibration on a fixed eval set; multi-hop
+  provenance-graph quality
 
-## Phase 5 — SDK
+## Phase 5 — SDK (next, pending approval)
 - [ ] Python SDK
 - [ ] TypeScript SDK
 

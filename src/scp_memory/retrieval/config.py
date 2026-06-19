@@ -9,6 +9,10 @@ from dataclasses import dataclass, field
 
 from scp_memory.retrieval.fusion import FusionWeights
 
+# Phase-4 default ranking weights: relevance still dominates, with trust as a
+# meaningful dimension and importance as a lighter tiebreaker (14-ranking-model).
+_DEFAULT_WEIGHTS = FusionWeights(keyword=0.35, vector=0.35, importance=0.1, trust=0.2)
+
 
 @dataclass(frozen=True)
 class RetrievalConfig:
@@ -16,4 +20,4 @@ class RetrievalConfig:
     default_k: int = 10
     max_k: int = 100
     candidate_limit: int = 500  # cap SQL candidates per query (latency guard)
-    weights: FusionWeights = field(default_factory=FusionWeights)
+    weights: FusionWeights = field(default_factory=lambda: _DEFAULT_WEIGHTS)

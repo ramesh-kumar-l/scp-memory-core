@@ -9,11 +9,11 @@ Cross-cutting initiatives currently in flight. Distinct from the single active
 
 | Initiative | Status | Notes |
 |---|---|---|
-| — | — | No active initiative; awaiting approval to start Phase 4. |
+| — | — | No active initiative; awaiting approval to start Phase 5. |
 
 ## Queued (not started)
 
-- Phase 4 — Trust Layer (pending explicit approval to begin)
+- Phase 5 — SDK (pending explicit approval to begin)
 
 ## Done
 
@@ -23,6 +23,9 @@ Cross-cutting initiatives currently in flight. Distinct from the single active
   decay; first `memory_relations` writes; 46 tests.
 - **Phase 3 — Hybrid Retrieval** (2026-06-20): keyword (BM25) + vector + metadata +
   explainable ranking fusion; pluggable `Embedder`/vector backends; 70 tests.
+- **Phase 4 — Trust Layer** (2026-06-20): provenance quality, confidence
+  (corroboration/contradiction), type-aware freshness, explainability; trust folded
+  into ranking + explain endpoint; 86 tests.
 
 ## Related
 
