@@ -1,10 +1,11 @@
 # 25 — ADR Log
 
-**Status:** Active · **Phase:** 5 · **Last updated:** 2026-06-20
+**Status:** Active · **Phase:** 6 · **Last updated:** 2026-06-20
 
 Architecture Decision Records. Format: Context · Decision · Status · Consequences.
-Phase 0 locks the recommended stack (ADR-001…010); Phase 5 adds ADR-011…013. All
-**Accepted**. Narrative in [06-technical-decisions](06-technical-decisions.md).
+Phase 0 locks the recommended stack (ADR-001…010); Phase 5 adds ADR-011…013;
+Phase 6 adds ADR-014. All **Accepted**. Narrative in
+[06-technical-decisions](06-technical-decisions.md).
 
 ---
 
@@ -127,6 +128,27 @@ Phase 0 locks the recommended stack (ADR-001…010); Phase 5 adds ADR-011…013.
   MiniLM) — re-embed when switching from a hashing-indexed collection. Refines
   [ADR-011](#adr-011--production-embeddings-local-sentence-transformers-opt-in-phase-5)
   and [ADR-012](#adr-012--sdk-stack-httpx-python--fetch-api-typescript-phase-5).
+
+## ADR-014 — Tracing is opt-in; SLOs as Prometheus rules + a runnable stack (Phase 6)
+- **Context:** ADR-009 fixed the OTel→Prometheus→Grafana stack. Phase 6 must
+  deliver it concretely (dashboards, a traced request path, defined SLOs) without
+  forcing heavy OpenTelemetry deps onto the hermetic test/offline path, and must
+  define what "healthy" means for production.
+- **Decision:** (1) **Tracing is opt-in** (`SCP_TRACING_ENABLED`, default off) and
+  lives behind the `[observability]` extra; FastAPI + SQLAlchemy auto-instrumentation
+  gives the API→service→store span tree, exported over OTLP. Metrics and structured
+  logs stay always-on (no gate). Enabling without the extra **fails loudly** (mirrors
+  ADR-011). (2) **SLOs are codified** as Prometheus recording + multi-window-burn
+  alerting rules (availability 99.9%; API p95<300ms / p99<1s; retrieval p95<500ms;
+  liveness) and visualised in a provisioned Grafana dashboard. (3) A **runnable
+  stack** (`deploy/observability/`: app + collector + Tempo + Prometheus + Grafana
+  via docker-compose) plus liveness/readiness probes (`/health`, `/health/ready`).
+- **Status:** Accepted (2026-06-20)
+- **Consequences:** Real distributed tracing and SLO alerting in production without
+  slowing CI or breaking offline dev. Logs correlate to traces via `trace_id`.
+  Vendor-neutral (OTLP) so the trace backend swaps freely. Bundled Tempo uses local
+  storage — back it with object storage in prod. Per-stage retrieval spans deferred.
+  Realises [ADR-009](#adr-009--observability-opentelemetry--prometheus--grafana).
 
 ---
 

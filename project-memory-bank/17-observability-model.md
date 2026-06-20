@@ -38,7 +38,19 @@ not deferred wholesale to Phase 6. Phase 6 delivers the full stack and dashboard
 ## Phase Notes
 
 - Phases 1–5: each feature adds its metrics/logs/spans inline.
-- Phase 6: consolidate into Prometheus + Grafana dashboards; SLOs defined.
+- Phase 6 ✅ (2026-06-20, ADR-014): consolidated into a runnable stack
+  (`deploy/observability/` — Prometheus + Grafana + Tempo + OTel collector).
+  Distributed tracing wired (opt-in, FastAPI + SQLAlchemy auto-instrumentation,
+  OTLP); `trace_id`/`span_id` stamped into JSON logs; liveness/readiness probes;
+  SLOs codified as Prometheus recording + alert rules with a Grafana dashboard.
+  Detail: [../docs/phase-6-observability.md](../docs/phase-6-observability.md).
+
+## SLOs (Phase 6)
+
+- **Availability:** 99.9% of API requests non-5xx (0.1% error budget).
+- **API latency:** p95 < 300ms, p99 < 1s.
+- **Retrieval latency:** p95 of `/v1/retrieval/search` < 500ms.
+- **Liveness:** the engine target stays scrapeable.
 
 ## Related
 

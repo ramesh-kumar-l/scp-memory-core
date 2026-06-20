@@ -46,8 +46,18 @@ phase is approved. The active phase is tracked in [08-active-phase](08-active-ph
 - [x] Offline local embedder behind `Embedder` (sentence-transformers, ADR-011)
 - [ ] *Deferred:* publish to PyPI / npm; async Python client; generated API reference
 
-## Phase 6 — Observability (next, pending approval)
-- [ ] Prometheus metrics + Grafana dashboards + OTel tracing wiring + SLOs
+## Phase 6 — Observability ✅ complete (2026-06-20)
+- [x] Prometheus metrics + `/metrics` (counters + request-latency histogram)
+- [x] OTel tracing wiring — opt-in (`SCP_TRACING_ENABLED`, `[observability]` extra),
+  FastAPI + SQLAlchemy auto-instrumentation → OTLP → collector → Tempo (ADR-014)
+- [x] Trace↔log correlation (`trace_id`/`span_id` in JSON logs); readiness probe
+  (`/health/ready`) alongside liveness (`/health`)
+- [x] SLOs as Prometheus recording + multi-window-burn alert rules; provisioned
+  Grafana dashboard
+- [x] Runnable stack (`deploy/observability/` docker-compose: app + collector +
+  Tempo + Prometheus + Grafana) + `Dockerfile`
+- [ ] *Deferred to production hardening:* manual per-stage retrieval spans
+  (keyword/vector/ranking); Tempo on object storage; alert routing (PagerDuty)
 
 ## Phase 7 — Admin Console
 - [ ] Dashboard, Memory Explorer, Retrieval Inspector, Trust Explorer, Benchmarks, Settings

@@ -4,8 +4,8 @@ build-backend = "hatchling.build"
 
 [project]
 name = "scp-memory-core"
-version = "0.4.0"
-description = "SCP Memory Engine — the memory infrastructure layer for AI systems (Phase 4: Trust Layer)."
+version = "0.5.0"
+description = "SCP Memory Engine — the memory infrastructure layer for AI systems (Phase 6: Observability)."
 readme = "README.md"
 requires-python = ">=3.11"
 license = { file = "LICENSE" }
@@ -34,6 +34,15 @@ vector = [
 # SCP_EMBEDDER=sentence-transformers; runs fully on-device — no embedding API.
 embeddings = [
   "sentence-transformers>=2.6",
+]
+# Distributed tracing (Phase 6, ADR-009/014). Enables SCP_TRACING_ENABLED=true;
+# spans (API → service → store) export over OTLP. Metrics + logs need nothing
+# extra — only tracing is gated behind this install.
+observability = [
+  "opentelemetry-sdk>=1.25",
+  "opentelemetry-exporter-otlp-proto-http>=1.25",
+  "opentelemetry-instrumentation-fastapi>=0.46b0",
+  "opentelemetry-instrumentation-sqlalchemy>=0.46b0",
 ]
 
 [tool.hatch.build.targets.wheel]

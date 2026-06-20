@@ -5,71 +5,65 @@
 ## Last Session Summary
 
 **Date:** 2026-06-20
-**Goal:** Answer the carried-over embedding question (offline local model), then
-implement Phase 5 — SDKs (Python + TypeScript) over the full API incl. trust.
+**Goal:** Implement Phase 6 — Observability (Prometheus + Grafana + OTel tracing +
+SLOs); exit criteria = dashboards + traced request path + defined SLOs, on a
+production-stable footing.
 
 ### What was done
-- **Offline local embedder (ADR-011):** `retrieval/local_embedder.py`
-  (`SentenceTransformerEmbedder`, lazy import, `all-MiniLM-L6-v2`, 384-dim, fully
-  on-device; `HF_HUB_OFFLINE` pin for air-gap) + `retrieval/embedder_factory.py`
-  (`build_embedder` selects via `SCP_EMBEDDER`). `config.Settings` gained
-  `embedder` / `embedding_model` / `embedding_offline`. `retrieval_service` now
-  builds its embedder via the factory — **default stays `HashingEmbedder`** so CI
-  is offline-by-default. New `[embeddings]` extra. Verified: the real model loads
-  and produces normalized 384-dim vectors.
-- **Python SDK** (`sdks/python`, `scp-memory-sdk` 0.5.0, httpx sync): `client.py`
-  facade + `resources/{memories,intelligence,retrieval,trust}.py` + typed `models.py`
-  + `_http.py` (actor header, param cleanup, error mapping) + `errors.py`. Accepts
-  an injected httpx client for in-process testing.
-- **TypeScript SDK** (`sdks/typescript`, `@scp/memory-sdk` 0.5.0, Fetch API):
-  `client.ts` + `resources/*.ts` + `types.ts` + `http.ts` + `errors.ts` + `index.ts`.
-  Injectable `fetchFn`. Strict `tsconfig`.
-- **Tests:** Python **96 passing** (+4 embedder-factory, +6 SDK round-trip via
-  `TestClient`: CRUD/audit/retrieval-with-trust/min_confidence/trust/consolidate).
-  TypeScript **6 passing** (vitest over stubbed fetch) + `tsc --noEmit` + build clean.
-- **Docs/examples:** `docs/phase-5-sdks.md`, both SDK READMEs, `examples/sdk_quickstart.py`
-  (verified end-to-end), ADR-011 + ADR-012 in `25-adr-log.md`.
+- **OTel distributed tracing (ADR-014):** `observability/tracing.py`
+  (`configure_tracing`) — **opt-in** via `SCP_TRACING_ENABLED` + the new
+  `[observability]` extra; FastAPI + SQLAlchemy auto-instrumentation gives the
+  API→service→store span tree, exported over OTLP. Wired into `create_app`. Enabling
+  without the extra **fails loudly**. `config.Settings` gained `tracing_enabled` /
+  `otlp_endpoint`.
+- **Trace↔log correlation:** `logging_config.py` stamps `trace_id`/`span_id` into
+  JSON logs via a guarded OTel import (logging unchanged when the extra is absent).
+- **Probes:** added `/health/ready` (DB check, 503 when down) beside liveness
+  `/health`; `/metrics` retained. (`api/routes/health.py`.)
+- **SLOs as code + runnable stack:** `deploy/observability/` — docker-compose
+  (app + OTel collector + Tempo + Prometheus + Grafana), Prometheus scrape +
+  `slo.rules.yml` (recording + multi-window-burn alerts), Grafana datasource +
+  dashboard provisioning (`scp-overview.json`). Root `Dockerfile` (non-root).
+- **Tests:** Python **105 passing** (+2 tracing, +2 logging, +3 ops-API, +2
+  deploy-asset). ruff + black clean.
+- **Docs:** `docs/phase-6-observability.md` (incl. SLO definitions), ADR-014 in
+  `25-adr-log.md`, `deploy/observability/README.md`.
 
 ### Decisions / notes
-- Embedder is **opt-in, not default**; explicit selection **fails loudly** if the
-  model can't load (no silent degradation). NLI for trust still deferred.
-- SDKs are **thin, typed, 1:1 with the API schemas**; transports injectable so
-  tests need no network/server; typed error hierarchy; forward-compatible parsing.
-- Engine version unchanged (**0.4.0**); SDKs **0.5.0**. No DB migrations.
+- **Tracing is opt-in; metrics + logs stay always-on.** Only tracing is gated, so
+  CI/offline dev need no OpenTelemetry. Vendor-neutral (OTLP) — backend swappable.
+- **SLOs:** availability 99.9% (0.1% budget); API p95<300ms / p99<1s; retrieval
+  p95<500ms; liveness. Codified as Prometheus rules + a Grafana dashboard.
+- Engine bumped **0.4.0 → 0.5.0**; SDKs unchanged (0.5.0). No DB migrations.
 
 ### State
-- Phase 5 **complete**, pending confirmation. No commit made yet (Phases 1–5 all
-  uncommitted on `master`).
+- Phase 6 **complete**, pending confirmation. **No commit made yet** — Phases 1–6
+  are all uncommitted on `master`.
 
 ## Where to Resume
 
-**Next:** Phase 6 — Observability (Prometheus metrics + Grafana dashboards + OTel
-tracing wiring + SLOs). See [09-backlog](09-backlog.md) Phase 6 section.
+**Next:** Phase 7 — Admin Console (Dashboard, Memory Explorer, Retrieval Inspector,
+Trust Explorer, Benchmarks, Settings; design system in
+[19-ui-design-system](19-ui-design-system.md)). See [09-backlog](09-backlog.md).
 
-> **Do not start Phase 6 without explicit approval** ([08-active-phase](08-active-phase.md)).
+> **Do not start Phase 7 without explicit approval** ([08-active-phase](08-active-phase.md)).
 
 ## First Actions Next Session
 1. Read `07`, `08`, `28` (this file).
-2. Confirm Phase 5 acceptance / get approval to begin Phase 6.
-3. If approved, follow the Phase 6 backlog with all quality gates.
+2. Confirm Phase 6 acceptance / get approval to begin Phase 7.
+3. If approved, follow the Phase 7 backlog with all quality gates.
 
 ## Resolved Decisions (2026-06-20)
-- **SDK publishing → keep in-repo this cycle (ADR-013).** Do *not* publish to
-  PyPI / npm yet: the API isn't frozen, there are no external consumers, and
-  published versions are permanent. Optionally reserve the `scp-memory-sdk` /
-  `@scp/memory-sdk` names with a placeholder `0.0.1` to block squatters. Full
-  publish deferred to the **1.0 / API-freeze** milestone (after Phase 6 gates).
-- **Production embedder → opt in at deployment, not in code (ADR-013).** The code
-  default stays `hashing` (keeps CI hermetic/offline and preserves the fail-loud
-  contract). Production deployments explicitly set
-  `SCP_EMBEDDER=sentence-transformers` (with the `[embeddings]` extra + a warm
-  model cache); add a deploy-time smoke check so a missing cache fails the deploy,
-  not a user query. Note: Qdrant collections are dimension-bound (384 for MiniLM) —
-  re-embed if switching from a hashing-indexed collection.
+- **SDK publishing → keep in-repo this cycle (ADR-013).** Full publish deferred to
+  the 1.0 / API-freeze milestone.
+- **Production embedder → opt in at deployment, not in code (ADR-013).** Code
+  default stays `hashing`; prod sets `SCP_EMBEDDER=sentence-transformers`.
+- **Tracing → opt-in at deployment (ADR-014).** Default off; prod sets
+  `SCP_TRACING_ENABLED=true` with the `[observability]` extra + an OTLP endpoint.
 
 ## Open Questions for User
-- Approve Phase 5 and authorize Phase 6?
-- Commit the Phases 1–5 code now? (nothing has been committed yet)
+- Approve Phase 6 and authorize Phase 7 (Admin Console)?
+- Commit the Phases 1–6 code now? (nothing has been committed yet)
 - Should trust adopt a real NLI model for corroboration/contradiction? (still deferred)
 
 ## Related

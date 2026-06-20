@@ -4,53 +4,53 @@
 
 > Doubles as the project's **active-context** save state (05 working agreement).
 
-## Active Phase: 5 — SDKs ✅ complete (awaiting approval for Phase 6)
+## Active Phase: 6 — Observability ✅ complete (awaiting approval for Phase 7)
 
 ### Goal
-Easy integration: official **Python** and **TypeScript** clients covering the
-full `v1` surface (CRUD + audit, intelligence, hybrid retrieval, trust), so apps
-never hand-roll HTTP. Plus the answer to the carried-over question — wire a real
-**offline local embedding model** behind the existing `Embedder` seam.
+Make the engine **operable and production-stable**: consolidate per-feature
+telemetry into a runnable stack with **dashboards, a traced request path, and
+defined SLOs** (the Phase-6 exit criteria), without burdening the hermetic/offline
+test path.
 
 ### Deliverables
-- [x] **Offline local embedder** (ADR-011): sentence-transformers
-  `all-MiniLM-L6-v2`, opt-in via `SCP_EMBEDDER=sentence-transformers` + `[embeddings]`
-  extra; `embedder_factory` selects it; hashing stays the hermetic default
-- [x] **Python SDK** `scp-memory-sdk` (httpx, sync): full surface, typed models,
-  typed errors, injectable client for in-process tests
-- [x] **TypeScript SDK** `@scp/memory-sdk` (Fetch API): full surface, typed,
-  injectable `fetchFn`, strict `tsc`
-- [x] Tests: Python round-trip via `TestClient`; TS vitest over stubbed fetch
-- [x] Docs (`docs/phase-5-sdks.md`), READMEs, `examples/sdk_quickstart.py`
+- [x] **OTel distributed tracing** (ADR-014): `observability/tracing.py`,
+  opt-in via `SCP_TRACING_ENABLED` + `[observability]` extra; FastAPI + SQLAlchemy
+  auto-instrumentation → OTLP → collector → Tempo; fail-loud if the extra is absent
+- [x] **Trace↔log correlation**: `trace_id`/`span_id` stamped into JSON logs
+  (guarded import — logging unchanged without the extra)
+- [x] **Liveness + readiness probes**: `/health` (process) + `/health/ready` (DB check, 503 when down)
+- [x] **SLOs codified**: Prometheus recording + multi-window-burn alert rules
+- [x] **Runnable stack**: `deploy/observability/` docker-compose (app + collector +
+  Tempo + Prometheus + Grafana) + provisioned dashboard + root `Dockerfile`
+- [x] Tests (tracing/logging/ops-API/deploy-assets), `docs/phase-6-observability.md`
 
 ### Exit Criteria (all met)
-- **Published clients covering the full API incl. trust** — both SDKs expose every
-  endpoint; search results carry the full trust breakdown.
-- Python: 96 tests passing (+ benchmark); ruff + black clean. TS: 6 tests;
-  `tsc --noEmit` + build clean.
-- Strict modularity: longest new file 208 lines (SDK `models.py`; none > 300).
+- **Dashboards** — provisioned Grafana "Overview & SLOs" dashboard over Prometheus + Tempo.
+- **Traced request path** — opt-in OTel spans cover API→service→store; logs carry the `trace_id`.
+- **Defined SLOs** — availability 99.9%; API p95<300ms / p99<1s; retrieval p95<500ms;
+  liveness — as Prometheus recording + alert rules.
+- Python: **105 tests** passing (+ benchmark); ruff + black clean.
+- Strict modularity: longest new source file `tracing.py` 75 lines (none > 300).
 - Quality gates satisfied ([05-engineering-principles](05-engineering-principles.md)).
 
 ### Status
-**Complete** (pending user confirmation). Awaiting approval to start Phase 6.
+**Complete** (pending user confirmation). Awaiting approval to start Phase 7.
 
 ### Key decisions
-- **Embedder is opt-in, not default.** Real semantic embeddings run **fully
-  on-device** (no API calls); `embedding_offline=True` pins the loader to the local
-  HF cache for air-gapped deploys. Explicit selection fails loudly if the model
-  can't load (no silent degradation). Hashing stand-in remains the offline-by-default
-  test path. NLI for trust stays deferred.
-- **SDKs are thin and 1:1 with the API schemas** — no behaviour the server lacks.
-  Transports are injectable (httpx client / `fetchFn`) so tests run in-process with
-  no network. Errors map to `ApiError` / `NotFoundError` / `ValidationError`.
-  Forward-compatible parsing (unknown keys ignored). Both pinned 0.5.0.
-- Engine version unchanged (0.4.0); no DB migrations.
+- **Tracing is opt-in, off by default.** Metrics + logs stay always-on; only
+  tracing is gated behind `[observability]`, so CI/offline dev need no
+  OpenTelemetry. Explicit enable without the extra **fails loudly** (mirrors the
+  ADR-011 embedder contract).
+- **SLOs live as code** (Prometheus rules) and are visualised in a provisioned
+  dashboard; availability uses a multi-window (5m∧30m) burn alert.
+- **Vendor-neutral** (OTLP) so the trace backend is swappable; bundled Tempo uses
+  local storage (use object storage in prod). Engine bumped to **0.5.0**; no DB migrations.
 
 ---
 
 ## ⛔ Stop Rule (operating model)
 
-> One phase is active at a time. **Do NOT begin Phase 6 (Observability) without
+> One phase is active at a time. **Do NOT begin Phase 7 (Admin Console) without
 > explicit user approval.** Never work ahead or skip phases.
 
 At the end of any phase: update `07`, `08`, `28`, then **stop** and wait for
@@ -58,8 +58,9 @@ explicit instruction.
 
 ## Next Phase (do not start yet)
 
-**Phase 6 — Observability:** Prometheus metrics + Grafana dashboards + OTel
-tracing wiring + SLOs. Scoped in [09-backlog](09-backlog.md).
+**Phase 7 — Admin Console:** Dashboard, Memory Explorer, Retrieval Inspector,
+Trust Explorer, Benchmarks, Settings (design system in
+[19-ui-design-system](19-ui-design-system.md)). Scoped in [09-backlog](09-backlog.md).
 
 ## Related
 

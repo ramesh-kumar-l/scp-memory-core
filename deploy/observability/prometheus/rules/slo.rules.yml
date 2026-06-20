@@ -1,0 +1,73 @@
+# SLO recording + alerting rules for the SCP Memory Engine (Phase 6).
+#
+# Service Level Objectives (see docs/phase-6-observability.md):
+#   - Availability : 99.9% of API requests are non-5xx        (error budget 0.1%)
+#   - Latency      : p95 API latency < 300ms, p99 < 1s
+#   - Retrieval    : p95 latency of /v1/retrieval/search < 500ms
+#
+# SLIs are derived from the scp_api_request_duration_seconds histogram emitted by
+# the ObservabilityMiddleware (labels: method, endpoint, status).
+groups:
+  - name: scp-slo-recording
+    interval: 30s
+    rules:
+      # Fraction of requests that failed (5xx) over the trailing 5m / 30m windows.
+      - record: job:scp_api_errors:ratio_rate5m
+        expr: |
+          sum(rate(scp_api_request_duration_seconds_count{status=~"5.."}[5m]))
+          /
+          clamp_min(sum(rate(scp_api_request_duration_seconds_count[5m])), 1e-9)
+      - record: job:scp_api_errors:ratio_rate30m
+        expr: |
+          sum(rate(scp_api_request_duration_seconds_count{status=~"5.."}[30m]))
+          /
+          clamp_min(sum(rate(scp_api_request_duration_seconds_count[30m])), 1e-9)
+      # Latency quantiles across all endpoints.
+      - record: job:scp_api_latency:p95_5m
+        expr: histogram_quantile(0.95, sum by (le) (rate(scp_api_request_duration_seconds_bucket[5m])))
+      - record: job:scp_api_latency:p99_5m
+        expr: histogram_quantile(0.99, sum by (le) (rate(scp_api_request_duration_seconds_bucket[5m])))
+      # Retrieval-specific latency (the heaviest read path).
+      - record: endpoint:scp_retrieval_latency:p95_5m
+        expr: |
+          histogram_quantile(0.95,
+            sum by (le) (rate(scp_api_request_duration_seconds_bucket{endpoint="/v1/retrieval/search"}[5m])))
+
+  - name: scp-slo-alerts
+    rules:
+      # Fast + slow burn on the availability error budget (multi-window).
+      - alert: ScpAvailabilityFastBurn
+        expr: job:scp_api_errors:ratio_rate5m > 0.001 and job:scp_api_errors:ratio_rate30m > 0.001
+        for: 5m
+        labels: {severity: page, slo: availability}
+        annotations:
+          summary: "SCP API burning the availability error budget fast"
+          description: "5xx ratio {{ $value | humanizePercentage }} exceeds the 99.9% SLO over 5m and 30m."
+      - alert: ScpApiLatencyP95High
+        expr: job:scp_api_latency:p95_5m > 0.3
+        for: 10m
+        labels: {severity: ticket, slo: latency}
+        annotations:
+          summary: "SCP API p95 latency above the 300ms SLO"
+          description: "p95 latency is {{ $value | humanizeDuration }}."
+      - alert: ScpApiLatencyP99High
+        expr: job:scp_api_latency:p99_5m > 1
+        for: 10m
+        labels: {severity: ticket, slo: latency}
+        annotations:
+          summary: "SCP API p99 latency above the 1s SLO"
+          description: "p99 latency is {{ $value | humanizeDuration }}."
+      - alert: ScpRetrievalLatencyP95High
+        expr: endpoint:scp_retrieval_latency:p95_5m > 0.5
+        for: 10m
+        labels: {severity: ticket, slo: retrieval-latency}
+        annotations:
+          summary: "Retrieval p95 latency above the 500ms SLO"
+          description: "/v1/retrieval/search p95 latency is {{ $value | humanizeDuration }}."
+      - alert: ScpEngineDown
+        expr: up{job="scp-memory-engine"} == 0
+        for: 1m
+        labels: {severity: page, slo: availability}
+        annotations:
+          summary: "SCP Memory Engine target is down"
+          description: "Prometheus cannot scrape the engine /metrics endpoint."

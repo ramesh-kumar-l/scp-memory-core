@@ -7,15 +7,16 @@
 
 ## Snapshot
 
-- **Phase:** 5 — SDKs **complete** (pending approval to start Phase 6).
+- **Phase:** 6 — Observability **complete** (pending approval to start Phase 7).
 - **Repository:** `scp-memory-core`, branch `master`. Python package, two client
-  SDKs, tests, CI, docs, examples, and the memory bank.
+  SDKs, an observability deploy stack, tests, CI, docs, examples, and the memory bank.
 - **Application code:** Memory Core (Phase 1) + Intelligence (Phase 2) + Hybrid
-  Retrieval (Phase 3) + Trust Layer (Phase 4). Phase 5 adds **Python + TypeScript
-  SDKs** covering the full API, plus a real **offline local embedder**
-  (sentence-transformers `all-MiniLM-L6-v2`) behind the existing `Embedder` seam.
+  Retrieval (Phase 3) + Trust Layer (Phase 4) + SDKs (Phase 5). Phase 6 adds the
+  **observability layer**: opt-in OTel **distributed tracing** (API→service→store),
+  **trace↔log correlation**, **liveness/readiness probes**, codified **SLOs**
+  (Prometheus rules), and a **runnable Grafana/Prometheus/Tempo stack**.
 - **Memory bank:** all 29 files (`00`–`28`) current.
-- **Version:** engine 0.4.0; SDKs 0.5.0.
+- **Version:** engine 0.5.0; SDKs 0.5.0.
 
 ## What Exists (code)
 
@@ -36,9 +37,13 @@
     (optional, integration-only), `trust_service` (DB-aware, no writes).
   - `api/` — FastAPI factory, routes (`/v1/memories` CRUD + `/audit`,
     `/v1/intelligence/{decay,dedup,consolidate}`, `/v1/retrieval/search`,
-    `/v1/trust/{memory_id}`, `/health`, `/metrics`).
-  - `db/`, `config.py` (+ vector-backend/Qdrant settings), `logging_config.py`,
-    `metrics.py` (+ retrieval & trust counters).
+    `/v1/trust/{memory_id}`, `/health`, `/health/ready`, `/metrics`);
+    `middleware.py` (request-id + latency histogram).
+  - `observability/` — `tracing.py` (`configure_tracing`: opt-in OTel, FastAPI +
+    SQLAlchemy auto-instrumentation, fail-loud if the extra is absent).
+  - `db/`, `config.py` (+ vector-backend/Qdrant + tracing settings),
+    `logging_config.py` (JSON + trace correlation), `metrics.py` (+ retrieval &
+    trust counters).
 - **SDKs** (`sdks/`):
   - `python/` — `scp-memory-sdk` 0.5.0 (httpx, sync): `client.py` facade +
     `resources/{memories,intelligence,retrieval,trust}.py` + `models.py` + `_http.py`
@@ -46,18 +51,24 @@
   - `typescript/` — `@scp/memory-sdk` 0.5.0 (Fetch API, Node 18+/browser/Deno):
     `client.ts` + `resources/*.ts` + `types.ts` + `http.ts` + `errors.ts`. Strict
     `tsc`; vitest over a stubbed fetch.
-- **Tests:** Python **96 passing** (+1 benchmark) — adds 4 embedder-factory + 6 SDK
-  round-trip (CRUD/audit/retrieval-with-trust/trust/consolidate) via `TestClient`.
+- **Deploy** (`deploy/observability/`): docker-compose stack (app + OTel collector
+  + Tempo + Prometheus + Grafana), Prometheus scrape + SLO recording/alert rules,
+  Grafana datasource + dashboard provisioning. Root `Dockerfile` (non-root,
+  `[observability]` extra).
+- **Tests:** Python **105 passing** (+1 benchmark) — Phase 6 adds 2 tracing
+  (disabled-noop + fail-loud), 2 logging (JSON extras + no trace leak), 3 ops API
+  (liveness/readiness/metrics), 2 deploy-asset (SLO rules YAML + dashboard JSON).
   TypeScript **6 passing** (typecheck + build clean).
-- **Docs/examples:** `docs/phase-1..5-*.md`, `examples/quickstart.py`,
+- **Docs/examples:** `docs/phase-1..6-*.md`, `examples/quickstart.py`,
   `examples/intelligence_quickstart.py`, `examples/retrieval_quickstart.py`,
   `examples/trust_quickstart.py`, `examples/sdk_quickstart.py`.
 
-## Quality Gates (Phase 5) — all met
+## Quality Gates (Phase 6) — all met
 
-Full-surface clients defined · tests (Python round-trip in-process + TS vitest) ·
-logging · metrics · docs · example. Python ruff + black clean; TS `tsc --noEmit`
-clean. Strict modularity preserved (longest new file 208, SDK `models.py`).
+Traced request path (opt-in OTel) · dashboards · SLOs codified as rules ·
+metrics · structured logs w/ trace correlation · liveness+readiness probes ·
+docs · runnable stack. Python ruff + black clean; 105 tests green. Strict
+modularity preserved (longest new file: `tracing.py` 75 lines; none > 300).
 
 ## What Does NOT Exist Yet
 
@@ -72,12 +83,16 @@ clean. Strict modularity preserved (longest new file 208, SDK `models.py`).
   Trust **calibration** (predicted vs. observed correctness) not yet measured.
 - **SDK publishing** — packaging is ready (hatchling wheel + `tsc` build) but not
   pushed to PyPI / npm; Python async client deferred.
+- **Tracing on the default path** — tracing is opt-in (`SCP_TRACING_ENABLED` +
+  `[observability]` extra) so CI/offline dev stay free of OpenTelemetry. Per-stage
+  retrieval spans and Tempo-on-object-storage are deferred to prod hardening.
 - Console, Android app — Phases 7–8.
 
 ## Next Step
 
-**Phase 6 — Observability** (Prometheus/Grafana dashboards, OTel tracing, SLOs).
-Begin **only after explicit approval** (see [08-active-phase](08-active-phase.md)).
+**Phase 7 — Admin Console** (Dashboard, Memory Explorer, Retrieval Inspector,
+Trust Explorer, Benchmarks, Settings). Begin **only after explicit approval**
+(see [08-active-phase](08-active-phase.md)).
 
 ## Pointers
 
@@ -88,4 +103,5 @@ Begin **only after explicit approval** (see [08-active-phase](08-active-phase.md
   [../docs/phase-2-memory-intelligence.md](../docs/phase-2-memory-intelligence.md) ·
   [../docs/phase-3-hybrid-retrieval.md](../docs/phase-3-hybrid-retrieval.md) ·
   [../docs/phase-4-trust-layer.md](../docs/phase-4-trust-layer.md) ·
-  [../docs/phase-5-sdks.md](../docs/phase-5-sdks.md)
+  [../docs/phase-5-sdks.md](../docs/phase-5-sdks.md) ·
+  [../docs/phase-6-observability.md](../docs/phase-6-observability.md)
