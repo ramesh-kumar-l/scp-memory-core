@@ -8,6 +8,10 @@ dist/
 .venv/
 venv/
 
+# Node / TypeScript SDK
+node_modules/
+*.tsbuildinfo
+
 # Tooling caches
 .pytest_cache/
 .ruff_cache/

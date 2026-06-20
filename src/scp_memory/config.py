@@ -31,6 +31,15 @@ class Settings(BaseSettings):
     qdrant_url: str = "http://localhost:6333"
     qdrant_collection: str = "scp_memories"
 
+    # Embeddings (ADR-011). "hashing" (default) = deterministic, dependency-free,
+    # offline stand-in (used in tests/dev). "sentence-transformers" = real local
+    # semantic embeddings (needs the [embeddings] extra); inference runs fully
+    # on-device — no embedding API calls. `embedding_offline` pins the model loader
+    # to the local cache, so an air-gapped deploy never reaches the network.
+    embedder: str = "hashing"
+    embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2"
+    embedding_offline: bool = True
+
 
 @lru_cache
 def get_settings() -> Settings:

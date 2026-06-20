@@ -7,14 +7,15 @@
 
 ## Snapshot
 
-- **Phase:** 4 — Trust Layer **complete** (pending approval to start Phase 5).
-- **Repository:** `scp-memory-core`, branch `master`. Python package, tests, CI,
-  docs, examples, and the memory bank.
+- **Phase:** 5 — SDKs **complete** (pending approval to start Phase 6).
+- **Repository:** `scp-memory-core`, branch `master`. Python package, two client
+  SDKs, tests, CI, docs, examples, and the memory bank.
 - **Application code:** Memory Core (Phase 1) + Intelligence (Phase 2) + Hybrid
-  Retrieval (Phase 3) + Trust Layer (Phase 4): provenance quality, confidence
-  (corroboration/contradiction), type-aware freshness, explainability.
+  Retrieval (Phase 3) + Trust Layer (Phase 4). Phase 5 adds **Python + TypeScript
+  SDKs** covering the full API, plus a real **offline local embedder**
+  (sentence-transformers `all-MiniLM-L6-v2`) behind the existing `Embedder` seam.
 - **Memory bank:** all 29 files (`00`–`28`) current.
-- **Version:** 0.4.0.
+- **Version:** engine 0.4.0; SDKs 0.5.0.
 
 ## What Exists (code)
 
@@ -24,7 +25,9 @@
     `AuditEvent`, `MemoryRelation`, enums, id helpers.
   - `intelligence/` — `scoring.py` (importance), `similarity.py` (lexical Jaccard).
   - `retrieval/` — `embedding.py` (`HashingEmbedder` + cosine, pure), `keyword.py`
-    (BM25, pure), `fusion.py` (weighted + RRF, pure; trust dimension), `config.py`.
+    (BM25, pure), `fusion.py` (weighted + RRF, pure; trust dimension), `config.py`,
+    `local_embedder.py` (offline sentence-transformers, opt-in), `embedder_factory.py`
+    (selects embedder via `SCP_EMBEDDER`).
   - `trust/` — `provenance.py`, `freshness.py`, `confidence.py`, `score.py`,
     `explain.py`, `config.py` (all pure, I/O-free).
   - `services/` — `memory_service`, `audit_service`, `importance_service`,
@@ -36,34 +39,45 @@
     `/v1/trust/{memory_id}`, `/health`, `/metrics`).
   - `db/`, `config.py` (+ vector-backend/Qdrant settings), `logging_config.py`,
     `metrics.py` (+ retrieval & trust counters).
-- **Tests** (`tests/`): unit (pure logic + each service) + integration +
-  benchmark seed — **86 passing** (+1 benchmark).
-- **Docs/examples:** `docs/phase-1..4-*.md`, `examples/quickstart.py`,
+- **SDKs** (`sdks/`):
+  - `python/` — `scp-memory-sdk` 0.5.0 (httpx, sync): `client.py` facade +
+    `resources/{memories,intelligence,retrieval,trust}.py` + `models.py` + `_http.py`
+    + `errors.py`. Injectable httpx client for in-process testing.
+  - `typescript/` — `@scp/memory-sdk` 0.5.0 (Fetch API, Node 18+/browser/Deno):
+    `client.ts` + `resources/*.ts` + `types.ts` + `http.ts` + `errors.ts`. Strict
+    `tsc`; vitest over a stubbed fetch.
+- **Tests:** Python **96 passing** (+1 benchmark) — adds 4 embedder-factory + 6 SDK
+  round-trip (CRUD/audit/retrieval-with-trust/trust/consolidate) via `TestClient`.
+  TypeScript **6 passing** (typecheck + build clean).
+- **Docs/examples:** `docs/phase-1..5-*.md`, `examples/quickstart.py`,
   `examples/intelligence_quickstart.py`, `examples/retrieval_quickstart.py`,
-  `examples/trust_quickstart.py`.
+  `examples/trust_quickstart.py`, `examples/sdk_quickstart.py`.
 
-## Quality Gates (Phase 4) — all met
+## Quality Gates (Phase 5) — all met
 
-API defined · tests (unit/integration/benchmark) · logging · metrics · docs ·
-example. Lint + format clean. Strict modularity preserved (longest new file 162,
-`trust_service.py`).
+Full-surface clients defined · tests (Python round-trip in-process + TS vitest) ·
+logging · metrics · docs · example. Python ruff + black clean; TS `tsc --noEmit`
+clean. Strict modularity preserved (longest new file 208, SDK `models.py`).
 
 ## What Does NOT Exist Yet
 
-- **Real semantic embeddings** — the default `HashingEmbedder` is a deterministic
-  token-hash stand-in (similarity ≈ shared tokens, not meaning). A real model
-  drops in behind the `Embedder` protocol.
+- **Real semantic embeddings on the default path** — the default `HashingEmbedder`
+  remains the hermetic stand-in. A real offline model now exists
+  (`SCP_EMBEDDER=sentence-transformers`, ADR-011) but is opt-in (needs the
+  `[embeddings]` extra) so CI stays offline-by-default.
 - **Qdrant in CI** — the adapter is wired behind `SCP_VECTOR_BACKEND=qdrant` but is
   integration-only; the tested default is the in-process brute-force backend.
 - **Semantic trust** — corroboration/contradiction are **lexical stand-ins**
   (token overlap + negation polarity); real NLI swaps in behind `trust_service`.
   Trust **calibration** (predicted vs. observed correctness) not yet measured.
-- SDKs, console, Android app — Phases 5–8.
+- **SDK publishing** — packaging is ready (hatchling wheel + `tsc` build) but not
+  pushed to PyPI / npm; Python async client deferred.
+- Console, Android app — Phases 7–8.
 
 ## Next Step
 
-**Phase 5 — SDK** (Python + TypeScript). Begin **only after explicit approval**
-(see [08-active-phase](08-active-phase.md)).
+**Phase 6 — Observability** (Prometheus/Grafana dashboards, OTel tracing, SLOs).
+Begin **only after explicit approval** (see [08-active-phase](08-active-phase.md)).
 
 ## Pointers
 
@@ -73,4 +87,5 @@ example. Lint + format clean. Strict modularity preserved (longest new file 162,
 - Phase guides: [../docs/phase-1-memory-core.md](../docs/phase-1-memory-core.md) ·
   [../docs/phase-2-memory-intelligence.md](../docs/phase-2-memory-intelligence.md) ·
   [../docs/phase-3-hybrid-retrieval.md](../docs/phase-3-hybrid-retrieval.md) ·
-  [../docs/phase-4-trust-layer.md](../docs/phase-4-trust-layer.md)
+  [../docs/phase-4-trust-layer.md](../docs/phase-4-trust-layer.md) ·
+  [../docs/phase-5-sdks.md](../docs/phase-5-sdks.md)

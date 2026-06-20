@@ -19,7 +19,7 @@ from scp_memory.metrics import RETRIEVAL_QUERIES
 from scp_memory.models.enums import MemoryState
 from scp_memory.models.memory import Memory
 from scp_memory.retrieval.config import RetrievalConfig
-from scp_memory.retrieval.embedding import HashingEmbedder
+from scp_memory.retrieval.embedder_factory import build_embedder
 from scp_memory.retrieval.fusion import weighted_fuse
 from scp_memory.retrieval.keyword import bm25_scores
 from scp_memory.schemas.retrieval import RetrieveRequest
@@ -31,7 +31,7 @@ from scp_memory.utils.time import utcnow
 logger = logging.getLogger("scp_memory.retrieval")
 
 _CONFIG = RetrievalConfig()
-_EMBEDDER = HashingEmbedder(dim=_CONFIG.embedding_dim)
+_EMBEDDER = build_embedder(config=_CONFIG)  # hashing by default; SCP_EMBEDDER selects a model
 
 
 @dataclass

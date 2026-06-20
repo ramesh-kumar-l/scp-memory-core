@@ -1,6 +1,6 @@
 # 23 — Roadmap
 
-**Status:** Active · **Phase:** 4 complete · **Last updated:** 2026-06-20
+**Status:** Active · **Phase:** 5 complete · **Last updated:** 2026-06-20
 
 Phases are executed strictly in order. Only one phase is active at a time; work
 stops at each boundary for explicit approval. See [08-active-phase](08-active-phase.md)
@@ -33,11 +33,13 @@ for the current phase.
 
 ## Current Position
 
-Phases 0–4 complete. Memory Core (audited, namespaced CRUD), Memory Intelligence
+Phases 0–5 complete. Memory Core (audited, namespaced CRUD), Memory Intelligence
 (importance, dedup, consolidation, decay), Hybrid Retrieval (keyword + vector +
-metadata + explainable ranking), and the Trust Layer (provenance, confidence,
-freshness, explainability — folded into ranking) are shipped and tested (86
-tests). Next: Phase 5 (SDK), to begin **only after explicit approval**.
+metadata + explainable ranking), the Trust Layer (provenance, confidence,
+freshness, explainability), and the **SDKs** (Python + TypeScript clients over the
+full API, plus an offline local embedder behind the `Embedder` seam) are shipped
+and tested (96 Python + 6 TS). Next: Phase 6 (Observability), to begin **only
+after explicit approval**.
 
 ## Related
 

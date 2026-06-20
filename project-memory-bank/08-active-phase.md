@@ -4,61 +4,62 @@
 
 > Doubles as the project's **active-context** save state (05 working agreement).
 
-## Active Phase: 4 — Trust Layer ✅ complete (awaiting approval for Phase 5)
+## Active Phase: 5 — SDKs ✅ complete (awaiting approval for Phase 6)
 
 ### Goal
-Trustworthy, explainable recall: attach provenance quality, confidence
-(corroboration/contradiction), and type-aware freshness to every retrieved
-memory; fold a composite **trust** score into ranking; and emit a human-readable
-explanation — no black boxes.
+Easy integration: official **Python** and **TypeScript** clients covering the
+full `v1` surface (CRUD + audit, intelligence, hybrid retrieval, trust), so apps
+never hand-roll HTTP. Plus the answer to the carried-over question — wire a real
+**offline local embedding model** behind the existing `Embedder` seam.
 
 ### Deliverables
-- [x] Pure `trust/` package: provenance, freshness, confidence, score, explain, config
-- [x] `trust_service` (DB-aware, no writes): per-memory verdict + namespace neighbours
-- [x] Trust folded into ranking fusion as a 4th weighted dimension (`weights.trust`)
-- [x] Results carry `signals.trust` + a full `trust` breakdown + explanation
-- [x] `min_confidence` filter on search (filtered, never silently hidden)
-- [x] Explain endpoint `GET /v1/trust/{memory_id}`
-- [x] Tests (pure unit + service + integration), metrics, logging, docs, example
+- [x] **Offline local embedder** (ADR-011): sentence-transformers
+  `all-MiniLM-L6-v2`, opt-in via `SCP_EMBEDDER=sentence-transformers` + `[embeddings]`
+  extra; `embedder_factory` selects it; hashing stays the hermetic default
+- [x] **Python SDK** `scp-memory-sdk` (httpx, sync): full surface, typed models,
+  typed errors, injectable client for in-process tests
+- [x] **TypeScript SDK** `@scp/memory-sdk` (Fetch API): full surface, typed,
+  injectable `fetchFn`, strict `tsc`
+- [x] Tests: Python round-trip via `TestClient`; TS vitest over stubbed fetch
+- [x] Docs (`docs/phase-5-sdks.md`), READMEs, `examples/sdk_quickstart.py`
 
 ### Exit Criteria (all met)
-- 86 tests passing (+ benchmark seed); ruff + black clean.
-- Every result carries a decomposable trust verdict + plain-language explanation;
-  namespace-isolated.
-- Strict modularity: longest source file 192 lines (none > 300; longest new 162).
+- **Published clients covering the full API incl. trust** — both SDKs expose every
+  endpoint; search results carry the full trust breakdown.
+- Python: 96 tests passing (+ benchmark); ruff + black clean. TS: 6 tests;
+  `tsc --noEmit` + build clean.
+- Strict modularity: longest new file 208 lines (SDK `models.py`; none > 300).
 - Quality gates satisfied ([05-engineering-principles](05-engineering-principles.md)).
 
 ### Status
-**Complete** (pending user confirmation). Awaiting approval to start Phase 5.
+**Complete** (pending user confirmation). Awaiting approval to start Phase 6.
 
 ### Key decisions
-- **Corroboration/contradiction are lexical stand-ins** (token-overlap Jaccard +
-  negation-polarity divergence), mirroring the Phase-3 embedder honesty pattern —
-  hermetic and swappable for semantic NLI behind `trust_service`, no contract change.
-- **Confidence has a provenance floor**: corroboration closes the gap to 1.0, so a
-  user-stated memory (provenance 1.0) is already at the ceiling — corroboration
-  lifts *lower-provenance* memories. Contradiction subtracts a fixed penalty.
-- **Freshness is type-aware** (preference 180d half-life ≫ event 14d); stale
-  memories are down-weighted, never deleted.
-- **Trust enters ranking as an extra weighted dimension.** Phase-4 default weights:
-  keyword 0.35 / vector 0.35 / importance 0.1 / trust 0.2. `weighted_fuse` keeps
-  trust optional so Phase-3 callers are unchanged.
-- Version bumped 0.3.0 → 0.4.0. No DB migrations (trust reads existing columns).
+- **Embedder is opt-in, not default.** Real semantic embeddings run **fully
+  on-device** (no API calls); `embedding_offline=True` pins the loader to the local
+  HF cache for air-gapped deploys. Explicit selection fails loudly if the model
+  can't load (no silent degradation). Hashing stand-in remains the offline-by-default
+  test path. NLI for trust stays deferred.
+- **SDKs are thin and 1:1 with the API schemas** — no behaviour the server lacks.
+  Transports are injectable (httpx client / `fetchFn`) so tests run in-process with
+  no network. Errors map to `ApiError` / `NotFoundError` / `ValidationError`.
+  Forward-compatible parsing (unknown keys ignored). Both pinned 0.5.0.
+- Engine version unchanged (0.4.0); no DB migrations.
 
 ---
 
 ## ⛔ Stop Rule (operating model)
 
-> One phase is active at a time. **Do NOT begin Phase 5 (SDK) without explicit
-> user approval.** Never work ahead or skip phases.
+> One phase is active at a time. **Do NOT begin Phase 6 (Observability) without
+> explicit user approval.** Never work ahead or skip phases.
 
 At the end of any phase: update `07`, `08`, `28`, then **stop** and wait for
 explicit instruction.
 
 ## Next Phase (do not start yet)
 
-**Phase 5 — SDK:** Python + TypeScript clients covering the full API surface
-(CRUD, intelligence, retrieval, trust). Scoped in [09-backlog](09-backlog.md).
+**Phase 6 — Observability:** Prometheus metrics + Grafana dashboards + OTel
+tracing wiring + SLOs. Scoped in [09-backlog](09-backlog.md).
 
 ## Related
 

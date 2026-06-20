@@ -30,12 +30,17 @@ dev = [
 vector = [
   "qdrant-client>=1.7",
 ]
+# Local, offline semantic embeddings (Phase 3 production seam, ADR-011). Enables
+# SCP_EMBEDDER=sentence-transformers; runs fully on-device — no embedding API.
+embeddings = [
+  "sentence-transformers>=2.6",
+]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/scp_memory"]
 
 [tool.pytest.ini_options]
-pythonpath = ["src"]
+pythonpath = ["src", "sdks/python/src"]
 testpaths = ["tests"]
 markers = [
   "benchmark: latency/throughput seed measurements (opt-in via -m benchmark).",

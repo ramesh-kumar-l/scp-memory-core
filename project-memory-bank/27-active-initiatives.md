@@ -9,13 +9,17 @@ Cross-cutting initiatives currently in flight. Distinct from the single active
 
 | Initiative | Status | Notes |
 |---|---|---|
-| — | — | No active initiative; awaiting approval to start Phase 5. |
+| — | — | No active initiative; awaiting approval to start Phase 6. |
 
 ## Queued (not started)
 
-- Phase 5 — SDK (pending explicit approval to begin)
+- Phase 6 — Observability (pending explicit approval to begin)
 
 ## Done
+
+- **Phase 5 — SDKs** (2026-06-20): Python (`scp-memory-sdk`) + TypeScript
+  (`@scp/memory-sdk`) clients over the full API incl. trust; offline local embedder
+  (sentence-transformers, ADR-011) behind the `Embedder` seam; 96 Python + 6 TS tests.
 
 - **Phase 0 — Project Foundation** (2026-06-20): full memory bank + locked stack.
 - **Phase 1 — Memory Core** (2026-06-20): audited, namespaced CRUD; 18 tests; CI.

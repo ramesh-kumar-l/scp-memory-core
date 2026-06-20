@@ -1,10 +1,10 @@
 # 25 — ADR Log
 
-**Status:** Active · **Phase:** 0 · **Last updated:** 2026-06-20
+**Status:** Active · **Phase:** 5 · **Last updated:** 2026-06-20
 
 Architecture Decision Records. Format: Context · Decision · Status · Consequences.
-Phase 0 locks the recommended stack — ADR-001…010 are **Accepted**. Narrative in
-[06-technical-decisions](06-technical-decisions.md).
+Phase 0 locks the recommended stack (ADR-001…010); Phase 5 adds ADR-011…012. All
+**Accepted**. Narrative in [06-technical-decisions](06-technical-decisions.md).
 
 ---
 
@@ -80,6 +80,34 @@ Phase 0 locks the recommended stack — ADR-001…010 are **Accepted**. Narrativ
 - **Status:** Accepted (2026-06-20)
 - **Consequences:** Rich ecosystem and fixtures; benchmark discipline required
   (a quality gate). Detail in [18-testing-strategy](18-testing-strategy.md).
+
+## ADR-011 — Production embeddings: local sentence-transformers, opt-in (Phase 5)
+- **Context:** Retrieval needs real *semantic* vectors, but the default/test path
+  must stay hermetic and offline. The carried-over question: which model behind the
+  `Embedder` seam, and must it run offline?
+- **Decision:** `sentence-transformers` with `all-MiniLM-L6-v2` (384-dim) — runs
+  **fully on-device, no embedding API**. Selected via `SCP_EMBEDDER=sentence-`
+  `transformers` (needs the `[embeddings]` extra); `embedding_offline=True` pins the
+  loader to the local HF cache (air-gap safe). The deterministic `HashingEmbedder`
+  stays the offline-by-default stand-in so CI needs no model.
+- **Status:** Accepted (2026-06-20)
+- **Consequences:** Real semantics on demand without changing retrieval/ranking/
+  vector code; opt-in keeps tests fast and network-free. Explicit selection fails
+  loudly if the model can't load (no silent degradation). Qdrant collections must
+  match the model's dimension when used together. NLI for trust remains deferred.
+
+## ADR-012 — SDK stack: httpx (Python) + Fetch API (TypeScript) (Phase 5)
+- **Context:** Phase 5 needs official clients over the full, stable API including
+  trust, integration-test-friendly and runnable in many environments.
+- **Decision:** Python SDK wraps `httpx` (sync) with an injectable client; the
+  TypeScript SDK uses the global `fetch` (Node 18+/browser/Deno) with an injectable
+  `fetchFn`. Both are thin, typed, 1:1 with the API schemas, with a typed error
+  hierarchy and forward-compatible parsing.
+- **Status:** Accepted (2026-06-20)
+- **Consequences:** Tests run in-process (FastAPI `TestClient` / stubbed fetch) with
+  no server; minimal dependencies. Sync-only Python (async deferred); SDKs version
+  independently (0.5.0) tracking the engine. Detail in
+  [../docs/phase-5-sdks.md](../docs/phase-5-sdks.md).
 
 ---
 

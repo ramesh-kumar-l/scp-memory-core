@@ -24,9 +24,11 @@ phase is approved. The active phase is tracked in [08-active-phase](08-active-ph
 - [x] Vector retrieval (`HashingEmbedder` stand-in + cosine; Qdrant backend seam)
 - [x] Metadata filtering (namespace/type/state constraints)
 - [x] Ranking engine (weighted-linear default + RRF; importance as a signal)
-- [ ] *Deferred to production hardening:* real embedding model behind `Embedder`;
-  Qdrant in CI; FTS5/`tsvector` inverted index; weighted-vs-RRF benchmark on a
-  fixed eval set
+- [x] *Real embedding model behind `Embedder`* — offline sentence-transformers
+  `all-MiniLM-L6-v2`, opt-in (`SCP_EMBEDDER=sentence-transformers`, ADR-011);
+  delivered in Phase 5
+- [ ] *Deferred to production hardening:* Qdrant in CI; FTS5/`tsvector` inverted
+  index; weighted-vs-RRF benchmark on a fixed eval set
 
 ## Phase 4 — Trust Layer ✅ complete (2026-06-20)
 - [x] Provenance quality scoring (source → quality)
@@ -38,11 +40,13 @@ phase is approved. The active phase is tracked in [08-active-phase](08-active-ph
   (NLI) behind `trust_service`; trust calibration on a fixed eval set; multi-hop
   provenance-graph quality
 
-## Phase 5 — SDK (next, pending approval)
-- [ ] Python SDK
-- [ ] TypeScript SDK
+## Phase 5 — SDK ✅ complete (2026-06-20)
+- [x] Python SDK (`scp-memory-sdk`, httpx) — full surface incl. trust
+- [x] TypeScript SDK (`@scp/memory-sdk`, Fetch) — full surface incl. trust
+- [x] Offline local embedder behind `Embedder` (sentence-transformers, ADR-011)
+- [ ] *Deferred:* publish to PyPI / npm; async Python client; generated API reference
 
-## Phase 6 — Observability
+## Phase 6 — Observability (next, pending approval)
 - [ ] Prometheus metrics + Grafana dashboards + OTel tracing wiring + SLOs
 
 ## Phase 7 — Admin Console
