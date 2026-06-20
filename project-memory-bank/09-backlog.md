@@ -59,8 +59,20 @@ phase is approved. The active phase is tracked in [08-active-phase](08-active-ph
 - [ ] *Deferred to production hardening:* manual per-stage retrieval spans
   (keyword/vector/ranking); Tempo on object storage; alert routing (PagerDuty)
 
-## Phase 7 — Admin Console
-- [ ] Dashboard, Memory Explorer, Retrieval Inspector, Trust Explorer, Benchmarks, Settings
+## Phase 7 — Admin Console ✅ complete (2026-06-20)
+- [x] Vite + React + TS SPA in `console/` (reuses `@scp/memory-sdk`); design tokens
+  (Inter, 8-pt grid, light+dark) per [19-ui-design-system](19-ui-design-system.md) (ADR-015)
+- [x] Dashboard (health + memory/retrieval/trust counters + API SLOs from `/metrics`)
+- [x] Memory Explorer (filter/page/create/delete + per-memory fields & audit trail)
+- [x] Retrieval Inspector (per-signal score bars + weights + trust; explainability)
+- [x] Trust Explorer (provenance/confidence/freshness bars + explanation)
+- [x] Benchmarks (live per-endpoint latency percentiles vs SLO targets)
+- [x] Settings (namespace, engine base URL, actor, theme); required Empty/Loading/
+  Error/keyboard/a11y states on every screen
+- [x] Same-origin transport (Vite proxy in dev, reverse proxy in prod) — **no engine
+  CORS change**; typecheck + 8 tests + production build green
+- [ ] *Deferred to production hardening:* console auth/session; multi-origin hosting
+  (opt-in CORS); historical trend charts (use Grafana/Tempo)
 
 ## Phase 8 — Android Reference App
 - [ ] On-device semantic memory demo

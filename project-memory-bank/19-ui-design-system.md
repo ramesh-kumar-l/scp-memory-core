@@ -44,6 +44,14 @@ information-rich, keyboard-first, restrained color.
   retrieved/ranked and *how trustworthy* it is.
 - Fast by default; perceived performance matters.
 
+## Phase Notes
+
+- Phase 7 ✅ (2026-06-20, ADR-015): realised as the `console/` SPA (Vite + React +
+  TS, reusing `@scp/memory-sdk`). All six screens shipped with tokens (Inter, 8-pt
+  grid, light+dark, semantic state/trust colors) and the required Empty/Loading/
+  Error/keyboard/a11y states. Explainability is visual via a shared score-bar
+  primitive. Detail: [../docs/phase-7-admin-console.md](../docs/phase-7-admin-console.md).
+
 ## Related
 
 [03-system-architecture](03-system-architecture.md) · [13-retrieval-model](13-retrieval-model.md) · [15-trust-model](15-trust-model.md) · [23-roadmap](23-roadmap.md)

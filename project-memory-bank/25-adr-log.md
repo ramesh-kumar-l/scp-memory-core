@@ -1,10 +1,10 @@
 # 25 — ADR Log
 
-**Status:** Active · **Phase:** 6 · **Last updated:** 2026-06-20
+**Status:** Active · **Phase:** 7 · **Last updated:** 2026-06-20
 
 Architecture Decision Records. Format: Context · Decision · Status · Consequences.
 Phase 0 locks the recommended stack (ADR-001…010); Phase 5 adds ADR-011…013;
-Phase 6 adds ADR-014. All **Accepted**. Narrative in
+Phase 6 adds ADR-014; Phase 7 adds ADR-015. All **Accepted**. Narrative in
 [06-technical-decisions](06-technical-decisions.md).
 
 ---
@@ -149,6 +149,33 @@ Phase 6 adds ADR-014. All **Accepted**. Narrative in
   Vendor-neutral (OTLP) so the trace backend swaps freely. Bundled Tempo uses local
   storage — back it with object storage in prod. Per-stage retrieval spans deferred.
   Realises [ADR-009](#adr-009--observability-opentelemetry--prometheus--grafana).
+
+## ADR-015 — Admin Console: Vite + React + TS, reuses the SDK, same-origin (no CORS) (Phase 7)
+- **Context:** Phase 7 needs an inspectable UI over memory/retrieval/trust + SLOs.
+  Two questions: the front-end stack, and how a browser app reaches the engine
+  without weakening its security posture (the engine ships **no CORS**, by design —
+  [16-security-model](16-security-model.md)).
+- **Decision:** (1) **Vite + React + TypeScript** SPA in `console/`, with **React
+  Query** for fetch/cache/loading/error state and **React Router** for the six
+  screens; design tokens (Inter, 8-pt grid, light+dark) per
+  [19-ui-design-system](19-ui-design-system.md). (2) **Reuse the official
+  `@scp/memory-sdk`** (Phase 5) as the only client — the console exercises the same
+  contract as any consumer; ops-only endpoints (`/health/ready`, `/metrics`) use a
+  thin fetch helper. (3) **Same-origin transport:** the console calls relative paths;
+  in dev the Vite server proxies `/v1`, `/health`, `/metrics` to the engine, and in
+  prod the static bundle sits behind a reverse proxy that forwards those paths. So
+  **the engine needs no CORS change** and no engine code is touched. Dashboards/
+  Benchmarks parse the Prometheus `/metrics` text client-side (no Grafana dependency
+  for in-console SLIs).
+- **Status:** Accepted (2026-06-20)
+- **Consequences:** Console ships with zero engine changes; the SDK stays the single
+  source of API truth (DRY). Strict modularity held (all files < 300 lines). Browser
+  metric parsing duplicates a little of Prometheus' quantile math (unit-tested).
+  Same-origin means prod deployments must front both with one proxy; a future
+  multi-origin/hosted console would need the opt-in CORS allowlist added then.
+  Console versions independently (0.6.0). Builds on
+  [ADR-012](#adr-012--sdk-stack-httpx-python--fetch-api-typescript-phase-5) and
+  [ADR-014](#adr-014--tracing-is-opt-in-slos-as-prometheus-rules--a-runnable-stack-phase-6).
 
 ---
 
