@@ -49,6 +49,36 @@ and the design system, without touching engine code.
 
 ---
 
+## Production hardening (post-Phase-7, 2026-06-20)
+
+Authorized deferred-backlog hardening on the Phases 1–6 engine. **No new phase
+started**; all additions are behind seams/flags with the prior default path
+unchanged. Delivered:
+
+- [x] **Trust corroboration seam** — `RelationDetector` (lexical default, `SCP_TRUST_NLI`
+  opt-in cross-encoder); behaviour-preserving refactor of `trust_service`.
+- [x] **Trust calibration harness** — `evals/` Brier/ECE over a fixed labelled set;
+  gates the lexical→NLI swap (24-known-risks R3).
+- [x] **Keyword backend seam** — in-process BM25 default; **SQLite FTS5** (unit-tested)
+  and **Postgres tsvector** inverted-index scale paths (`SCP_KEYWORD_BACKEND`).
+- [x] **Weighted-vs-RRF benchmark** — `evals/` nDCG/MRR; confirms weighted is the
+  better default on the eval set (nDCG 1.00 vs 0.69).
+- [x] **Per-stage retrieval spans** — `observability/spans.py`, no-op-safe.
+- [x] **Alert routing** — Alertmanager (severity page/ticket + inhibition); Prometheus
+  wired; assets tested.
+- [x] **Qdrant + Postgres in CI** — dedicated `integration` job + env-gated tests.
+- [x] **Publish runbook** — `Publish_Guide.md` (PyPI/npm + async Python client).
+
+Gates: **132 Python tests pass** (+1 benchmark, +3 gated integration skipped
+offline); `ruff` + `black` clean; strict modularity held (largest new/changed file
+194 lines). Nothing committed yet (Phases 1–7 + this hardening all on `master`).
+
+**Pending (not started, still gated):** run NLI under calibration to decide adoption;
+turn on FTS5/tsvector in a real deploy; publish SDKs + build the async client;
+alert-receiver wiring to a real pager.
+
+---
+
 ## ⛔ Stop Rule (operating model)
 
 > One phase is active at a time. **Do NOT begin Phase 8 (Android Reference App)

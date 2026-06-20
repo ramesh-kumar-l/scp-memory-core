@@ -87,3 +87,27 @@ def reciprocal_rank_fusion(rank_lists: list[list[str]], k: int = 60) -> dict[str
         for rank, item_id in enumerate(ranked):
             scores[item_id] = scores.get(item_id, 0.0) + 1.0 / (k + rank + 1)
     return scores
+
+
+def rrf_fuse(
+    item_ids: list[str],
+    signals: dict[str, list[float]],
+    k: int = 60,
+) -> list[tuple[float, dict[str, float]]]:
+    """Reciprocal-rank-fuse per-signal score arrays into (score, contributions) pairs.
+
+    Each signal in ``signals`` (aligned with ``item_ids``) is turned into a ranking;
+    RRF combines those rankings. Robust to the heterogeneous scales of BM25, cosine,
+    importance and trust without min-max normalization. The contribution dict carries
+    the raw per-signal values so results stay explainable.
+    """
+    rank_lists: list[list[str]] = []
+    for values in signals.values():
+        order = sorted(range(len(item_ids)), key=lambda i: values[i], reverse=True)
+        rank_lists.append([item_ids[i] for i in order])
+    fused_scores = reciprocal_rank_fusion(rank_lists, k=k)
+    out: list[tuple[float, dict[str, float]]] = []
+    for idx, item_id in enumerate(item_ids):
+        parts = {name: round(values[idx], 4) for name, values in signals.items()}
+        out.append((fused_scores.get(item_id, 0.0), parts))
+    return out

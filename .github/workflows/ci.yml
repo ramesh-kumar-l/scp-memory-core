@@ -28,3 +28,40 @@ jobs:
         run: pytest -m "not benchmark" -q
       - name: Benchmark seed
         run: pytest -m benchmark -q
+
+  # Scale-path integration: exercises the PostgreSQL (tsvector) and Qdrant (ANN)
+  # backends against real services. Kept separate so the default `test` job stays
+  # fully offline. Tests are env-gated (skip when the URLs are unset).
+  integration:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: scp
+          POSTGRES_PASSWORD: scp
+          POSTGRES_DB: scp_memory
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U scp"
+          --health-interval 10s --health-timeout 5s --health-retries 5
+      qdrant:
+        image: qdrant/qdrant:latest
+        ports: ["6333:6333"]
+        options: >-
+          --health-cmd "bash -c ':> /dev/tcp/127.0.0.1/6333'"
+          --health-interval 10s --health-timeout 5s --health-retries 5
+    env:
+      SCP_TEST_POSTGRES_URL: postgresql+psycopg://scp:scp@localhost:5432/scp_memory
+      SCP_TEST_QDRANT_URL: http://localhost:6333
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install (with scale-path extras)
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev,vector]" psycopg[binary]
+      - name: Scale-path integration tests
+        run: pytest -m "postgres or qdrant" -q

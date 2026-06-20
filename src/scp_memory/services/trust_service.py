@@ -5,10 +5,12 @@ provenance source, age, and namespace neighbours — into an explainable per-mem
 trust verdict. Trust augments ranking (14-ranking-model) and travels with every
 retrieval result; it never silently hides memories.
 
-Corroboration/contradiction here are **lexical stand-ins**: token-overlap for
-agreement and negation-polarity divergence for conflict. This mirrors the Phase-2
-dedup approach (honest, hermetic, zero-infra) and is swappable for semantic NLI
-without changing the trust contract. The service never mutates the database.
+Corroboration/contradiction here defaults to a **lexical stand-in**: token-overlap
+for agreement and negation-polarity divergence for conflict. This mirrors the
+Phase-2 dedup approach (honest, hermetic, zero-infra). The decision is delegated
+to a ``RelationDetector`` (``services.relation_detector``), so a semantic NLI
+detector swaps in behind ``SCP_TRUST_NLI`` without changing the trust contract.
+The service never mutates the database.
 """
 
 import logging
@@ -18,26 +20,22 @@ from datetime import datetime
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
-from scp_memory.intelligence.similarity import jaccard, tokenize
+from scp_memory.intelligence.similarity import tokenize
 from scp_memory.models.enums import MemoryState
 from scp_memory.models.memory import Memory
+from scp_memory.services.relation_detector import RelationDetector, get_relation_detector
 from scp_memory.trust.confidence import confidence_score
 from scp_memory.trust.config import TrustConfig
 from scp_memory.trust.explain import explain
 from scp_memory.trust.freshness import freshness_score
 from scp_memory.trust.provenance import provenance_quality
+from scp_memory.trust.relation import Relation
 from scp_memory.trust.score import trust_score
 from scp_memory.utils.time import utcnow
 
 logger = logging.getLogger("scp_memory.trust")
 
 _CONFIG = TrustConfig()
-
-# Lexical negation markers — a divergence in polarity between two otherwise highly
-# similar memories signals contradiction (stand-in for real NLI).
-_NEGATIONS = frozenset(
-    {"not", "no", "never", "none", "dont", "doesnt", "cant", "cannot", "wont", "isnt", "arent"}
-)
 
 
 @dataclass
@@ -72,29 +70,24 @@ def _token_map(memories: list[Memory]) -> dict[str, set[str]]:
     return {m.id: tokenize(m.content) for m in memories}
 
 
-def _agreement(a: set[str], b: set[str], threshold: float) -> tuple[bool, bool]:
-    """Return (corroborates, contradicts) for two memories' token sets."""
-    if jaccard(a, b) < threshold:
-        return (False, False)
-    # Highly similar: divergent negation polarity flips agreement into conflict.
-    if (a & _NEGATIONS) and not (b & _NEGATIONS):
-        return (False, True)
-    if (b & _NEGATIONS) and not (a & _NEGATIONS):
-        return (False, True)
-    return (True, False)
-
-
 def _counts(
-    memory: Memory, neighbors: list[Memory], tokens: dict[str, set[str]], config: TrustConfig
+    memory: Memory,
+    neighbors: list[Memory],
+    tokens: dict[str, set[str]],
+    config: TrustConfig,
+    detector: RelationDetector,
 ) -> tuple[int, int]:
-    m_tokens = tokens[memory.id]
     corroboration = contradiction = 0
     for other in neighbors:
         if other.id == memory.id or other.type != memory.type:
             continue
-        agree, conflict = _agreement(m_tokens, tokens[other.id], config.corroboration_threshold)
-        corroboration += int(agree)
-        contradiction += int(conflict)
+        relation = detector.relate(
+            memory, other, tokens[memory.id], tokens[other.id], config=config
+        )
+        if relation is Relation.AGREE:
+            corroboration += 1
+        elif relation is Relation.CONFLICT:
+            contradiction += 1
     return corroboration, contradiction
 
 
@@ -104,12 +97,13 @@ def _evaluate(
     tokens: dict[str, set[str]],
     now: datetime,
     config: TrustConfig,
+    detector: RelationDetector,
 ) -> TrustResult:
     source = _source_of(memory)
     pq = provenance_quality(source)
     age_seconds = _age_seconds(memory.created_at, now)
     fresh = freshness_score(age_seconds, config.half_life_for(memory.type))
-    corroboration, contradiction = _counts(memory, neighbors, tokens, config)
+    corroboration, contradiction = _counts(memory, neighbors, tokens, config, detector)
     confidence = confidence_score(
         provenance_quality=pq,
         corroboration=corroboration,
@@ -144,15 +138,21 @@ def evaluate(
     neighbors: list[Memory],
     now: datetime | None = None,
     config: TrustConfig = _CONFIG,
+    detector: RelationDetector | None = None,
 ) -> TrustResult:
     """Evaluate one memory's trust against a neighbour pool."""
     now = now or utcnow()
+    detector = detector or get_relation_detector()
     pool = list({m.id: m for m in [memory, *neighbors]}.values())
-    return _evaluate(memory, neighbors, _token_map(pool), now, config)
+    return _evaluate(memory, neighbors, _token_map(pool), now, config, detector)
 
 
 def evaluate_all(
-    memories: list[Memory], *, now: datetime | None = None, config: TrustConfig = _CONFIG
+    memories: list[Memory],
+    *,
+    now: datetime | None = None,
+    config: TrustConfig = _CONFIG,
+    detector: RelationDetector | None = None,
 ) -> list[TrustResult]:
     """Evaluate trust for each memory using the others as the neighbour pool.
 
@@ -160,8 +160,9 @@ def evaluate_all(
     back onto rows.
     """
     now = now or utcnow()
+    detector = detector or get_relation_detector()
     tokens = _token_map(memories)
-    return [_evaluate(m, memories, tokens, now, config) for m in memories]
+    return [_evaluate(m, memories, tokens, now, config, detector) for m in memories]
 
 
 def evaluate_memory(

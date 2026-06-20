@@ -49,6 +49,20 @@ class Settings(BaseSettings):
     tracing_enabled: bool = False
     otlp_endpoint: str = ""  # e.g. http://otel-collector:4318/v1/traces; empty = SDK default
 
+    # Trust corroboration detector (Phase 4 hardening, 24-known-risks R3). Lexical
+    # (default) is hermetic and zero-infra. "true" opts into a local cross-encoder
+    # NLI model (needs the [embeddings] extra) for semantic agreement/contradiction;
+    # runs on-device. Calibrate first — eval/run_trust_calibration.py — before
+    # enabling, so the swap is justified by measured gain, not assumed.
+    trust_nli: bool = False
+    trust_nli_model: str = "cross-encoder/nli-deberta-v3-small"
+
+    # Keyword backend (Phase 3 hardening). "bm25" (default) scores Okapi BM25 over
+    # the metadata-filtered candidates in-process (zero-infra, O(N)). "fts5" uses a
+    # persistent SQLite FTS5 inverted index; "tsvector" uses a Postgres GIN index.
+    # The inverted-index backends are the scale path (integration-only in CI).
+    keyword_backend: str = "bm25"
+
 
 @lru_cache
 def get_settings() -> Settings:

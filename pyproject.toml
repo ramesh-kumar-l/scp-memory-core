@@ -49,10 +49,12 @@ observability = [
 packages = ["src/scp_memory"]
 
 [tool.pytest.ini_options]
-pythonpath = ["src", "sdks/python/src"]
+pythonpath = ["src", "sdks/python/src", "."]
 testpaths = ["tests"]
 markers = [
   "benchmark: latency/throughput seed measurements (opt-in via -m benchmark).",
+  "postgres: requires a PostgreSQL instance (SCP_TEST_POSTGRES_URL); skipped otherwise.",
+  "qdrant: requires a running Qdrant (SCP_TEST_QDRANT_URL); skipped otherwise.",
 ]
 
 [tool.ruff]

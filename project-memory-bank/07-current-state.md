@@ -69,9 +69,26 @@
   MemoryDetail, RetrievalInspector, TrustExplorer, Benchmarks, Settings). Same-origin
   transport (Vite dev proxy / reverse proxy in prod). Reuses the built SDK via
   `file:../sdks/typescript`.
-- **Tests:** Python **105 passing** (+1 benchmark). TypeScript SDK **6 passing**.
-  Console **8 passing** (Prometheus parser + quantile/error-ratio math; UI-primitive
-  rendering) — `tsc` strict typecheck clean; production build green (~74 kB gzip).
+- **Production-hardening (post-Phase-7, specs→code, all gated paths opt-in):**
+  - `trust/relation.py` + `services/relation_detector.py` — corroboration detection
+    behind a `RelationDetector` seam; **lexical default**, **NLI opt-in**
+    (`SCP_TRUST_NLI`, cross-encoder, on-device, fails loud without `[embeddings]`).
+  - `services/keyword_backend.py` (+ `fts5_backend.py`, `tsvector_backend.py`) —
+    keyword search behind a backend seam; **in-process BM25 default**, **SQLite
+    FTS5** and **Postgres tsvector** inverted-index scale paths (`SCP_KEYWORD_BACKEND`).
+  - `retrieval/fusion.rrf_fuse` + `retrieval_service.search(fuse_method=…)` — RRF
+    selectable alongside weighted (internal/benchmark knob; API unchanged).
+  - `observability/spans.py` — no-op-safe per-stage retrieval spans
+    (candidates/vector/keyword/trust/fuse).
+  - `evals/` — offline harnesses: trust **calibration** (Brier/ECE) and **weighted-
+    vs-RRF** retrieval benchmark (nDCG/MRR) over fixed labelled datasets.
+  - `deploy/observability/alertmanager/` + Prometheus `alerting:` — severity-routed
+    alerts (page/ticket) with engine-down inhibition.
+  - CI `integration` job (Postgres + Qdrant services) + env-gated tests.
+- **Tests:** Python **132 passing** (+1 benchmark; +3 **gated** Postgres/Qdrant
+  integration tests, skipped offline). TypeScript SDK **6 passing**. Console
+  **8 passing** — `tsc` strict typecheck clean; production build green (~74 kB gzip).
+  Lint (`ruff`) + format (`black`) clean across `src tests evals`.
 - **Docs/examples:** `docs/phase-1..6-*.md`, `examples/quickstart.py`,
   `examples/intelligence_quickstart.py`, `examples/retrieval_quickstart.py`,
   `examples/trust_quickstart.py`, `examples/sdk_quickstart.py`.
@@ -91,16 +108,26 @@ a running engine.
   remains the hermetic stand-in. A real offline model now exists
   (`SCP_EMBEDDER=sentence-transformers`, ADR-011) but is opt-in (needs the
   `[embeddings]` extra) so CI stays offline-by-default.
-- **Qdrant in CI** — the adapter is wired behind `SCP_VECTOR_BACKEND=qdrant` but is
-  integration-only; the tested default is the in-process brute-force backend.
-- **Semantic trust** — corroboration/contradiction are **lexical stand-ins**
-  (token overlap + negation polarity); real NLI swaps in behind `trust_service`.
-  Trust **calibration** (predicted vs. observed correctness) not yet measured.
-- **SDK publishing** — packaging is ready (hatchling wheel + `tsc` build) but not
-  pushed to PyPI / npm; Python async client deferred.
-- **Tracing on the default path** — tracing is opt-in (`SCP_TRACING_ENABLED` +
-  `[observability]` extra) so CI/offline dev stay free of OpenTelemetry. Per-stage
-  retrieval spans and Tempo-on-object-storage are deferred to prod hardening.
+- **Qdrant / Postgres in CI** — now exercised by a dedicated `integration` CI job
+  (services: postgres 16 + qdrant) with env-gated tests; **locally these skip**
+  (no services). The offline default remains brute-force + SQLite.
+- **Semantic trust** — corroboration/contradiction default to **lexical stand-ins**;
+  a real **NLI detector is now available opt-in** (`SCP_TRUST_NLI`). The
+  lexical→NLI swap is **gated on the calibration harness**
+  (`evals/run_trust_calibration.py`): on the fixed set the lexical detector scores
+  Brier ≈ 0.17 / ECE ≈ 0.19, with visible over-confidence where it mis-reads
+  semantic contradictions (dark/light, berlin/munich) — turn NLI on only when it
+  measurably lowers ECE. NLI not yet run in CI (needs the `[embeddings]` model).
+- **FTS5/tsvector in production** — backends exist and FTS5 is unit-tested; the
+  default keyword path stays in-process BM25. tsvector is exercised only in the
+  Postgres CI job.
+- **SDK publishing** — packaging ready (hatchling wheel + `tsc` build) but **not
+  pushed** to PyPI / npm; **async Python client deferred**. Step-by-step runbook
+  now in [Publish_Guide](Publish_Guide.md).
+- **Tracing on the default path** — tracing stays opt-in (`SCP_TRACING_ENABLED` +
+  `[observability]` extra) so CI/offline dev stay free of OpenTelemetry. **Per-stage
+  retrieval spans now exist** (`observability/spans.py`, no-op-safe) and activate
+  when tracing is enabled. Tempo-on-object-storage remains deferred.
 - **Console auth/session** — the console trusts the network boundary today; no login
   layer. Multi-origin/hosted console (opt-in CORS) and historical trend charts deferred.
 - Android app — Phase 8. **Spec is ready** (`android-app-system-prompt.md` +
