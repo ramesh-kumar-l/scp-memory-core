@@ -3,7 +3,7 @@
 **Status:** Active · **Phase:** 5 · **Last updated:** 2026-06-20
 
 Architecture Decision Records. Format: Context · Decision · Status · Consequences.
-Phase 0 locks the recommended stack (ADR-001…010); Phase 5 adds ADR-011…012. All
+Phase 0 locks the recommended stack (ADR-001…010); Phase 5 adds ADR-011…013. All
 **Accepted**. Narrative in [06-technical-decisions](06-technical-decisions.md).
 
 ---
@@ -108,6 +108,25 @@ Phase 0 locks the recommended stack (ADR-001…010); Phase 5 adds ADR-011…012.
   no server; minimal dependencies. Sync-only Python (async deferred); SDKs version
   independently (0.5.0) tracking the engine. Detail in
   [../docs/phase-5-sdks.md](../docs/phase-5-sdks.md).
+
+## ADR-013 — Rollout: SDKs stay in-repo until 1.0; prod embedder opts in at deploy (Phase 5)
+- **Context:** Two carried-over questions: publish the SDKs to PyPI/npm now, and
+  flip the production embedder default to `sentence-transformers`?
+- **Decision:** (1) **Keep the SDKs in-repo this cycle** — the API isn't frozen,
+  there are no external consumers, and published versions are permanent. Optionally
+  reserve the `scp-memory-sdk` / `@scp/memory-sdk` names with a placeholder. Full
+  publish deferred to the **1.0 / API-freeze** milestone (after Phase 6 gates).
+  (2) **Production embedder opts in at deployment, not in code** — the code default
+  stays `hashing` (hermetic/offline CI + fail-loud contract); prod sets
+  `SCP_EMBEDDER=sentence-transformers` with a warm cache and a deploy-time load
+  smoke check.
+- **Status:** Accepted (2026-06-20)
+- **Consequences:** Freedom to break the 0.x API without yanking public releases;
+  zero release-maintenance burden pre-1.0. Real semantics in prod without touching
+  retrieval/ranking. Caveat: Qdrant collections are dimension-bound (384 for
+  MiniLM) — re-embed when switching from a hashing-indexed collection. Refines
+  [ADR-011](#adr-011--production-embeddings-local-sentence-transformers-opt-in-phase-5)
+  and [ADR-012](#adr-012--sdk-stack-httpx-python--fetch-api-typescript-phase-5).
 
 ---
 

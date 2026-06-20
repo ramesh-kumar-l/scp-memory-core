@@ -53,12 +53,24 @@ tracing wiring + SLOs). See [09-backlog](09-backlog.md) Phase 6 section.
 2. Confirm Phase 5 acceptance / get approval to begin Phase 6.
 3. If approved, follow the Phase 6 backlog with all quality gates.
 
+## Resolved Decisions (2026-06-20)
+- **SDK publishing → keep in-repo this cycle (ADR-013).** Do *not* publish to
+  PyPI / npm yet: the API isn't frozen, there are no external consumers, and
+  published versions are permanent. Optionally reserve the `scp-memory-sdk` /
+  `@scp/memory-sdk` names with a placeholder `0.0.1` to block squatters. Full
+  publish deferred to the **1.0 / API-freeze** milestone (after Phase 6 gates).
+- **Production embedder → opt in at deployment, not in code (ADR-013).** The code
+  default stays `hashing` (keeps CI hermetic/offline and preserves the fail-loud
+  contract). Production deployments explicitly set
+  `SCP_EMBEDDER=sentence-transformers` (with the `[embeddings]` extra + a warm
+  model cache); add a deploy-time smoke check so a missing cache fails the deploy,
+  not a user query. Note: Qdrant collections are dimension-bound (384 for MiniLM) —
+  re-embed if switching from a hashing-indexed collection.
+
 ## Open Questions for User
 - Approve Phase 5 and authorize Phase 6?
 - Commit the Phases 1–5 code now? (nothing has been committed yet)
-- Publish the SDKs to PyPI / npm this cycle, or keep them in-repo for now?
-- Should the production deployment default to `SCP_EMBEDDER=sentence-transformers`,
-  and should trust adopt a real NLI model for corroboration/contradiction?
+- Should trust adopt a real NLI model for corroboration/contradiction? (still deferred)
 
 ## Related
 

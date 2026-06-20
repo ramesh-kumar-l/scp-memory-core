@@ -40,6 +40,15 @@ class Settings(BaseSettings):
     embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2"
     embedding_offline: bool = True
 
+    # Observability / distributed tracing (Phase 6, ADR-009/014). Tracing is
+    # opt-in: disabled by default so tests and the offline dev path need no
+    # OpenTelemetry install. Enable in production with the [observability] extra;
+    # spans (API → service → store) export over OTLP to a collector. An explicit
+    # enable without the extra installed fails loudly (no silent no-op). Metrics
+    # (/metrics) and structured logs are always on — only tracing is gated here.
+    tracing_enabled: bool = False
+    otlp_endpoint: str = ""  # e.g. http://otel-collector:4318/v1/traces; empty = SDK default
+
 
 @lru_cache
 def get_settings() -> Settings:

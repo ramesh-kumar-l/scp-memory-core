@@ -9,6 +9,7 @@ from scp_memory.api.middleware import ObservabilityMiddleware
 from scp_memory.api.routes import health, intelligence, memories, retrieval, trust
 from scp_memory.config import get_settings
 from scp_memory.logging_config import configure_logging
+from scp_memory.observability import configure_tracing
 
 
 def create_app(*, init: bool = True) -> FastAPI:
@@ -31,13 +32,15 @@ def create_app(*, init: bool = True) -> FastAPI:
 
     app = FastAPI(
         title="SCP Memory Engine — Memory Core",
-        version="0.4.0",
+        version="0.5.0",
         summary="Audited memory CRUD + self-management (importance, dedup, "
         "consolidation, decay) + hybrid retrieval (keyword + vector + ranking) + "
-        "trust layer (provenance, confidence, freshness, explainability).",
+        "trust layer (provenance, confidence, freshness, explainability) + "
+        "observability (metrics, structured logs, opt-in OTLP tracing, SLOs).",
         lifespan=lifespan,
     )
     app.add_middleware(ObservabilityMiddleware)
+    configure_tracing(app, settings=settings)
     register_error_handlers(app)
     app.include_router(health.router)
     app.include_router(memories.router)
