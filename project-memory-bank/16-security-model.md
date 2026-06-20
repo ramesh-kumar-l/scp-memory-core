@@ -19,6 +19,15 @@ add-ons. Audit lands with Phase 1; richer controls layer in as phases progress.
 - **Namespacing** scopes every memory to a tenant/owner; retrieval is always
   filtered by namespace ([13-retrieval-model](13-retrieval-model.md)).
 - AuthN/Z at the API layer; authorization checked before any read/write.
+- **Auth is enforced at the deployment proxy in front of engine + console
+  (resolved 2026-06-20).** AuthN lives in infrastructure (reverse proxy /
+  API gateway / SSO / mTLS) terminating the same-origin transport (ADR-015) for
+  *both* the engine and the Admin Console. App code trusts the authenticated
+  boundary; the Admin Console ships **no** bespoke login/session layer. Rationale:
+  a console-only login is theater while `/v1/*` is directly reachable — one
+  infra control point protects everything at near-zero app code and lower risk.
+  Per-user authorization (RBAC over namespaces) is a separate, later **engine**
+  concern, not a console one.
 
 ### Audit Trail (Phase 1)
 - **Append-only** `audit_events` for every mutation (create/update/delete/

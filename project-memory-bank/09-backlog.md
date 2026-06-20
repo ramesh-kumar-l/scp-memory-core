@@ -36,9 +36,12 @@ phase is approved. The active phase is tracked in [08-active-phase](08-active-ph
 - [x] Freshness (type-aware half-lives)
 - [x] Explainability output + explain endpoint (`GET /v1/trust/{memory_id}`)
 - [x] Trust folded into ranking fusion; `min_confidence` filter on search
-- [ ] *Deferred to production hardening:* semantic corroboration/contradiction
-  (NLI) behind `trust_service`; trust calibration on a fixed eval set; multi-hop
-  provenance-graph quality
+- [ ] *Deferred to production hardening (sequencing resolved 2026-06-20, R3):*
+  build the **trust-calibration eval set first** (predicted vs. observed
+  correctness); keep lexical corroboration/contradiction until measured to be the
+  bottleneck; only then adopt **NLI** behind `trust_service`, **opt-in**
+  (`SCP_TRUST_NLI`, to keep CI hermetic). Multi-hop provenance-graph quality also
+  deferred. ([24](24-known-risks.md))
 
 ## Phase 5 — SDK ✅ complete (2026-06-20)
 - [x] Python SDK (`scp-memory-sdk`, httpx) — full surface incl. trust
@@ -71,8 +74,11 @@ phase is approved. The active phase is tracked in [08-active-phase](08-active-ph
   Error/keyboard/a11y states on every screen
 - [x] Same-origin transport (Vite proxy in dev, reverse proxy in prod) — **no engine
   CORS change**; typecheck + 8 tests + production build green
-- [ ] *Deferred to production hardening:* console auth/session; multi-origin hosting
-  (opt-in CORS); historical trend charts (use Grafana/Tempo)
+- [ ] *Resolved 2026-06-20 (R-auth, see [16](16-security-model.md)):* **no bespoke
+  console login/session** — auth is enforced at the deployment proxy in front of
+  engine + console (infra, not app code). RBAC over namespaces is a later engine
+  concern. *Still deferred:* multi-origin hosting (opt-in CORS); historical trend
+  charts (use Grafana/Tempo)
 
 ## Phase 8 — Android Reference App
 - [ ] On-device semantic memory demo

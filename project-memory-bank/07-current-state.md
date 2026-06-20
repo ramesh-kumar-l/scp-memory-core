@@ -17,7 +17,10 @@
   SPA over the full signal surface — Dashboard, Memory Explorer, Retrieval
   Inspector, Trust Explorer, Benchmarks, Settings — reusing `@scp/memory-sdk` and
   talking to the engine same-origin (no CORS / no engine change).
-- **Memory bank:** all 29 files (`00`–`28`) current.
+- **Memory bank:** all 29 files (`00`–`28`) current, plus two Phase-8 **prep
+  artifacts**: `29-api-contracts.md` (consolidated *implemented* HTTP surface) and
+  `android-app-system-prompt.md` (self-contained Android Reference App spec for a
+  separate Claude Design session). These are specs only — **no Phase-8 code**.
 - **Version:** engine 0.5.0; SDKs 0.5.0; console 0.6.0.
 
 ## What Exists (code)
@@ -100,7 +103,8 @@ a running engine.
   retrieval spans and Tempo-on-object-storage are deferred to prod hardening.
 - **Console auth/session** — the console trusts the network boundary today; no login
   layer. Multi-origin/hosted console (opt-in CORS) and historical trend charts deferred.
-- Android app — Phase 8.
+- Android app — Phase 8. **Spec is ready** (`android-app-system-prompt.md` +
+  `29-api-contracts.md`) for hand-off to Claude Design; **not yet built**.
 
 ## Next Step
 

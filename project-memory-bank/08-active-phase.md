@@ -62,6 +62,13 @@ explicit instruction.
 **Phase 8 — Android Reference App:** on-device semantic memory demo against the
 engine. Scoped in [09-backlog](09-backlog.md).
 
+> **Prep done (2026-06-20):** a self-contained build spec
+> (`android-app-system-prompt.md`) and a consolidated API-contract reference
+> (`29-api-contracts.md`) now exist, designed to be handed to a separate **Claude
+> Design** session. Writing the spec is **not** starting Phase 8 — no app code has
+> been written. The stop rule above still applies: do not implement Phase 8 here
+> without explicit approval.
+
 ## Related
 
 [07-current-state](07-current-state.md) · [28-session-handoff](28-session-handoff.md) · [23-roadmap](23-roadmap.md) · [../docs/phase-7-admin-console.md](../docs/phase-7-admin-console.md)

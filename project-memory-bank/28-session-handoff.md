@@ -44,10 +44,22 @@ signals**, on a production-stable footing.
   are all uncommitted on `master`. (A live-contract check wrote a demo row to the
   dev `scp_memory.db`; harmless.)
 
+### Phase-8 prep artifacts (2026-06-20, specs only — no code)
+- **`29-api-contracts.md`** — consolidated, authoritative reference of the
+  *implemented* engine HTTP surface (CRUD+audit, intelligence passes,
+  `/v1/retrieval/search`, `/v1/trust/{id}`, ops). Supersedes the Phase-0 draft
+  (`10`) where they differ.
+- **`android-app-system-prompt.md`** — self-contained Android Reference App build
+  spec (20 sections: overview, 6 screen specs, 7 step-by-step user flows, domain
+  models, API contracts, trust model, architecture = Compose/M3/MVVM/Hilt/Nav-Compose,
+  offline, ≥12 demo scenarios, acceptance criteria, non-goals). Designed as the
+  **only** input to a separate **Claude Design** session.
+- **These are specifications, not Phase-8 implementation.** The stop rule stands.
+
 ## Where to Resume
 
 **Next:** Phase 8 — Android Reference App (on-device semantic memory demo against
-the engine). See [09-backlog](09-backlog.md).
+the engine). The build spec above is hand-off ready. See [09-backlog](09-backlog.md).
 
 > **Do not start Phase 8 without explicit approval** ([08-active-phase](08-active-phase.md)).
 
@@ -62,12 +74,16 @@ the engine). See [09-backlog](09-backlog.md).
 - **Production embedder → opt in at deployment (ADR-013).** Code default `hashing`.
 - **Tracing → opt-in at deployment (ADR-014).** Default off; prod sets the flag + extra.
 - **Console stack → Vite+React+TS, reuse SDK, same-origin/no-CORS (ADR-015).**
+- **Console auth → no bespoke login; enforce at the deployment proxy** in front of
+  engine + console (infra, not app code). RBAC over namespaces is a later engine
+  concern. ([16-security-model](16-security-model.md))
+- **Trust NLI → calibration eval set first; keep lexical until measured the
+  bottleneck; then NLI opt-in (`SCP_TRUST_NLI`)** behind `trust_service`.
+  ([24-known-risks](24-known-risks.md) R3)
 
 ## Open Questions for User
 - Approve Phase 7 and authorize Phase 8 (Android Reference App)?
 - Commit the Phases 1–7 code now? (nothing has been committed yet)
-- Console auth: add a login/session layer, or keep trusting the network boundary?
-- Should trust adopt a real NLI model for corroboration/contradiction? (still deferred)
 
 ## Related
 
