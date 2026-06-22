@@ -1,0 +1,128 @@
+{
+  "$comment": "Single source of truth for the 10 golden examples. Consumed by two seeders: scp-memory-core/seed/seed_golden_examples.py (engine, via HTTP API) and SCPMemoryEngine_AndroidReferenceApp/seed/seed_golden_device.py (Android, direct Room write with backdated ages). See documents/11-demo-and-examples-pack.md.",
+  "namespace": "demo:golden",
+  "actor": "demo:golden",
+  "image_dir": "/storage/emulated/0/Android/data/com.scp.memory.reference/files/images",
+  "examples": [
+    {
+      "id": "mem_gold_darkmode",
+      "type": "preference",
+      "content": "User prefers dark mode",
+      "importance": 0.50,
+      "age_days": 60,
+      "provenance_source": "user",
+      "derived_from": [],
+      "metadata": { "usecase": "assistant", "topic": "theme" },
+      "media": null,
+      "demonstrates": "Baseline high-provenance (user) preference; older than its contradiction"
+    },
+    {
+      "id": "mem_gold_lightmode",
+      "type": "preference",
+      "content": "User switched to light mode and no longer wants dark mode",
+      "importance": 0.58,
+      "age_days": 3,
+      "provenance_source": "user",
+      "derived_from": [],
+      "metadata": { "usecase": "assistant", "topic": "theme" },
+      "media": null,
+      "demonstrates": "Contradiction vs mem_gold_darkmode; recent so freshness ranks it higher"
+    },
+    {
+      "id": "mem_gold_staffgoal",
+      "type": "preference",
+      "content": "User wants to become a staff engineer within 2 years",
+      "importance": 0.72,
+      "age_days": 20,
+      "provenance_source": "user",
+      "derived_from": [],
+      "metadata": { "usecase": "assistant", "topic": "career" },
+      "media": null,
+      "demonstrates": "Source memory consolidated into mem_gold_summary"
+    },
+    {
+      "id": "mem_gold_meetings",
+      "type": "preference",
+      "content": "User dislikes long meetings",
+      "importance": 0.45,
+      "age_days": 15,
+      "provenance_source": "inferred",
+      "derived_from": [],
+      "metadata": { "usecase": "assistant", "topic": "meetings" },
+      "media": null,
+      "demonstrates": "Inferred provenance (0.5) -> lower confidence floor than user-stated"
+    },
+    {
+      "id": "mem_gold_summary",
+      "type": "summary",
+      "content": "Summary: user is pursuing a staff-engineer role and prefers short, focused meetings",
+      "importance": 0.68,
+      "age_days": 2,
+      "provenance_source": "consolidation",
+      "derived_from": ["mem_gold_staffgoal", "mem_gold_meetings"],
+      "metadata": { "usecase": "assistant", "topic": "career" },
+      "media": null,
+      "demonstrates": "Consolidation provenance (0.75) with derived_from (on-device); summary lifecycle"
+    },
+    {
+      "id": "mem_gold_dinner",
+      "type": "event",
+      "content": "Spent 2450 rupees on dinner at a Goa beach shack, paid by card",
+      "importance": 0.60,
+      "age_days": 35,
+      "provenance_source": "user",
+      "derived_from": [],
+      "metadata": { "usecase": "finance", "category": "dining", "amount": "2450", "currency": "INR", "location": "Goa" },
+      "media": null,
+      "demonstrates": "Metadata-rich finance retrieval (amount/category/location)"
+    },
+    {
+      "id": "mem_gold_netflix",
+      "type": "fact",
+      "content": "Netflix subscription renews on the 18th, 649 rupees per month",
+      "importance": 0.55,
+      "age_days": 12,
+      "provenance_source": "user",
+      "derived_from": [],
+      "metadata": { "usecase": "finance", "category": "subscription", "amount": "649", "currency": "INR" },
+      "media": null,
+      "demonstrates": "Recurring fact; fact freshness decays slowly vs an event"
+    },
+    {
+      "id": "mem_gold_goatrip",
+      "type": "event",
+      "content": "Goa beach trip — sunset photos with college friends",
+      "importance": 0.78,
+      "age_days": 35,
+      "provenance_source": "user",
+      "derived_from": [],
+      "metadata": { "usecase": "gallery", "location": "Goa", "objects": "beach,sunset", "people": "friends" },
+      "media": { "file": "goa_beach.png", "caption": "Goa beach at sunset", "mime": "image/png" },
+      "demonstrates": "Semantic gallery (query by event, not filename) + event decay at 35 days"
+    },
+    {
+      "id": "mem_gold_flight",
+      "type": "event",
+      "content": "Flight ticket Delhi to Goa, seat 14A, 8200 rupees — biggest trip expense",
+      "importance": 0.66,
+      "age_days": 40,
+      "provenance_source": "user",
+      "derived_from": [],
+      "metadata": { "usecase": "gallery", "route": "DEL-GOI", "category": "travel", "amount": "8200", "currency": "INR" },
+      "media": null,
+      "demonstrates": "Hybrid retrieval by route/semantics; cross-use-case (gallery + finance)"
+    },
+    {
+      "id": "mem_gold_timezone",
+      "type": "fact",
+      "content": "User's timezone is IST (Asia/Kolkata), set during onboarding",
+      "importance": 0.40,
+      "age_days": 90,
+      "provenance_source": "system",
+      "derived_from": [],
+      "metadata": { "usecase": "assistant", "topic": "profile" },
+      "media": null,
+      "demonstrates": "System provenance (0.4) -> lowest trust floor"
+    }
+  ]
+}
