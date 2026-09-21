@@ -1,0 +1,70 @@
+"""Application configuration, sourced from environment (12-factor).
+
+All settings are read from `SCP_`-prefixed env vars (or a local `.env`). No
+secrets live in the repo (see 16-security-model).
+"""
+
+from functools import lru_cache
+
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class Settings(BaseSettings):
+    """Runtime settings for the Memory Core service."""
+
+    model_config = SettingsConfigDict(env_prefix="SCP_", env_file=".env", extra="ignore")
+
+    # Relational store: SQLite for the MVP, PostgreSQL URL for scale (ADR-005/006).
+    database_url: str = "sqlite:///./scp_memory.db"
+    log_level: str = "INFO"
+    service_name: str = "scp-memory-core"
+
+    # Memory intelligence knobs (Phase 2). Operational thresholds for the batch
+    # decay/dedup passes; scoring weights live in intelligence.scoring.ScoringConfig.
+    decay_threshold: float = 0.25  # importance below this → decayed
+    dedup_similarity_threshold: float = 0.85  # Jaccard at/above this → duplicate
+
+    # Hybrid retrieval (Phase 3). Vector backend: "bruteforce" (default, in-process,
+    # zero-infra) or "qdrant" (scale path; needs the [vector] extra + a running
+    # Qdrant). Algorithmic knobs (dims, weights, k) live in retrieval.config.
+    vector_backend: str = "bruteforce"
+    qdrant_url: str = "http://localhost:6333"
+    qdrant_collection: str = "scp_memories"
+
+    # Embeddings (ADR-011). "hashing" (default) = deterministic, dependency-free,
+    # offline stand-in (used in tests/dev). "sentence-transformers" = real local
+    # semantic embeddings (needs the [embeddings] extra); inference runs fully
+    # on-device — no embedding API calls. `embedding_offline` pins the model loader
+    # to the local cache, so an air-gapped deploy never reaches the network.
+    embedder: str = "hashing"
+    embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2"
+    embedding_offline: bool = True
+
+    # Observability / distributed tracing (Phase 6, ADR-009/014). Tracing is
+    # opt-in: disabled by default so tests and the offline dev path need no
+    # OpenTelemetry install. Enable in production with the [observability] extra;
+    # spans (API → service → store) export over OTLP to a collector. An explicit
+    # enable without the extra installed fails loudly (no silent no-op). Metrics
+    # (/metrics) and structured logs are always on — only tracing is gated here.
+    tracing_enabled: bool = False
+    otlp_endpoint: str = ""  # e.g. http://otel-collector:4318/v1/traces; empty = SDK default
+
+    # Trust corroboration detector (Phase 4 hardening, 24-known-risks R3). Lexical
+    # (default) is hermetic and zero-infra. "true" opts into a local cross-encoder
+    # NLI model (needs the [embeddings] extra) for semantic agreement/contradiction;
+    # runs on-device. Calibrate first — eval/run_trust_calibration.py — before
+    # enabling, so the swap is justified by measured gain, not assumed.
+    trust_nli: bool = False
+    trust_nli_model: str = "cross-encoder/nli-deberta-v3-small"
+
+    # Keyword backend (Phase 3 hardening). "bm25" (default) scores Okapi BM25 over
+    # the metadata-filtered candidates in-process (zero-infra, O(N)). "fts5" uses a
+    # persistent SQLite FTS5 inverted index; "tsvector" uses a Postgres GIN index.
+    # The inverted-index backends are the scale path (integration-only in CI).
+    keyword_backend: str = "bm25"
+
+
+@lru_cache
+def get_settings() -> Settings:
+    """Return a cached Settings instance."""
+    return Settings()

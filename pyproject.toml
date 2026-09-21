@@ -1,0 +1,74 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "scp-memory-core"
+version = "0.5.0"
+description = "SCP Memory Engine — the memory infrastructure layer for AI systems (Phase 6: Observability)."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { file = "LICENSE" }
+dependencies = [
+  "fastapi>=0.110",
+  "uvicorn[standard]>=0.29",
+  "pydantic>=2.6",
+  "pydantic-settings>=2.2",
+  "sqlalchemy>=2.0",
+  "prometheus-client>=0.20",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.0",
+  "httpx>=0.27",
+  "ruff>=0.4",
+  "black>=24.0",
+]
+# Scale-path vector backend (Phase 3). The default "bruteforce" backend needs
+# nothing extra; install this only to run Qdrant ANN (SCP_VECTOR_BACKEND=qdrant).
+vector = [
+  "qdrant-client>=1.7",
+]
+# Local, offline semantic embeddings (Phase 3 production seam, ADR-011). Enables
+# SCP_EMBEDDER=sentence-transformers; runs fully on-device — no embedding API.
+embeddings = [
+  "sentence-transformers>=2.6",
+]
+# Distributed tracing (Phase 6, ADR-009/014). Enables SCP_TRACING_ENABLED=true;
+# spans (API → service → store) export over OTLP. Metrics + logs need nothing
+# extra — only tracing is gated behind this install.
+observability = [
+  "opentelemetry-sdk>=1.25",
+  "opentelemetry-exporter-otlp-proto-http>=1.25",
+  "opentelemetry-instrumentation-fastapi>=0.46b0",
+  "opentelemetry-instrumentation-sqlalchemy>=0.46b0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/scp_memory"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src", "sdks/python/src", "."]
+testpaths = ["tests"]
+markers = [
+  "benchmark: latency/throughput seed measurements (opt-in via -m benchmark).",
+  "postgres: requires a PostgreSQL instance (SCP_TEST_POSTGRES_URL); skipped otherwise.",
+  "qdrant: requires a running Qdrant (SCP_TEST_QDRANT_URL); skipped otherwise.",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.ruff.lint.flake8-bugbear]
+# FastAPI's dependency-injection markers are designed to be called in defaults.
+extend-immutable-calls = ["fastapi.Depends", "fastapi.Query", "fastapi.Header"]
+
+[tool.black]
+line-length = 100
+target-version = ["py311"]

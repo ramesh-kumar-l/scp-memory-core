@@ -1,0 +1,27 @@
+{
+  "description": "Fixed, hand-labelled trust-calibration set. Each item carries a ground-truth `correct` flag (is the statement actually true for the subject?). The harness runs the trust scorers to predict a confidence, then measures calibration (Brier / ECE) of predicted-confidence vs observed-correctness. Clusters intentionally include semantic contradictions the lexical detector mis-reads as corroboration (e.g. dark/light, berlin/munich) to expose where NLI should help.",
+  "items": [
+    {"id": "a1", "namespace": "user:alice", "type": "preference", "source": "user", "age_days": 4, "content": "alice prefers dark mode interface", "correct": true},
+    {"id": "a2", "namespace": "user:alice", "type": "preference", "source": "user", "age_days": 9, "content": "alice prefers dark mode theme interface", "correct": true},
+    {"id": "a3", "namespace": "user:alice", "type": "preference", "source": "inferred", "age_days": 45, "content": "alice prefers light mode interface", "correct": false},
+    {"id": "a4", "namespace": "user:alice", "type": "preference", "source": "user", "age_days": 3, "content": "alice wants email notifications enabled", "correct": true},
+    {"id": "a5", "namespace": "user:alice", "type": "preference", "source": "inferred", "age_days": 20, "content": "alice wants no email notifications enabled", "correct": false},
+    {"id": "c1", "namespace": "user:alice", "type": "preference", "source": "user", "age_days": 2, "content": "alice prefers metric units everywhere", "correct": true},
+
+    {"id": "b1", "namespace": "user:bob", "type": "fact", "source": "user", "age_days": 5, "content": "bob lives in berlin germany", "correct": true},
+    {"id": "b2", "namespace": "user:bob", "type": "fact", "source": "inferred", "age_days": 60, "content": "bob lives in munich germany", "correct": false},
+    {"id": "b3", "namespace": "user:bob", "type": "fact", "source": "user", "age_days": 7, "content": "bob works as a backend engineer", "correct": true},
+    {"id": "b4", "namespace": "user:bob", "type": "fact", "source": "consolidation", "age_days": 30, "content": "bob speaks german fluently", "correct": true},
+    {"id": "b5", "namespace": "user:bob", "type": "fact", "source": "inferred", "age_days": 80, "content": "bob speaks french fluently", "correct": false},
+
+    {"id": "e1", "namespace": "svc:logs", "type": "event", "source": "system", "age_days": 1, "content": "deployment of release v2 succeeded", "correct": true},
+    {"id": "e2", "namespace": "svc:logs", "type": "event", "source": "system", "age_days": 1, "content": "deployment of release v2 failed", "correct": false},
+    {"id": "e3", "namespace": "svc:logs", "type": "event", "source": "system", "age_days": 12, "content": "nightly backup job completed cleanly", "correct": true},
+
+    {"id": "d1", "namespace": "doc:facts", "type": "fact", "source": "user", "age_days": 6, "content": "the project deadline is june 30", "correct": true},
+    {"id": "d2", "namespace": "doc:facts", "type": "fact", "source": "user", "age_days": 4, "content": "the api base path is slash v1", "correct": true},
+    {"id": "d3", "namespace": "doc:facts", "type": "fact", "source": "system", "age_days": 90, "content": "the server timezone is utc", "correct": true},
+    {"id": "d4", "namespace": "doc:facts", "type": "fact", "source": "inferred", "age_days": 30, "content": "the user timezone is pst pacific", "correct": false},
+    {"id": "d5", "namespace": "doc:facts", "type": "fact", "source": "inferred", "age_days": 25, "content": "the user timezone is est eastern", "correct": true}
+  ]
+}

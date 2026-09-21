@@ -1,0 +1,56 @@
+# Alertmanager routing for the SCP Memory Engine (Phase 6 hardening).
+#
+# Routes the SLO alerts (deploy/observability/prometheus/rules/slo.rules.yml) by
+# their `severity` label:
+#   severity=page   -> pager receiver  (wake someone: error-budget fast burn, engine down)
+#   severity=ticket -> tickets receiver (file work: latency SLO breaches)
+#
+# Receivers below are vendor-neutral webhook stubs. Point them at a real
+# integration (PagerDuty, Opsgenie, Slack, email) at deploy time — secrets are
+# injected from the environment, never committed (16-security-model). Validate
+# with: amtool check-config deploy/observability/alertmanager/alertmanager.yml
+global:
+  resolve_timeout: 5m
+
+route:
+  receiver: default
+  group_by: ["alertname", "slo"]
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  routes:
+    # Page-worthy: tight grouping, fast + frequent re-notification until resolved.
+    - matchers: ['severity = "page"']
+      receiver: pager
+      group_wait: 10s
+      group_interval: 2m
+      repeat_interval: 1h
+      continue: false
+    # Ticket-worthy: slower cadence, batched.
+    - matchers: ['severity = "ticket"']
+      receiver: tickets
+      group_wait: 1m
+      repeat_interval: 12h
+      continue: false
+
+# Suppress noise: when the engine is down, every derived latency/availability
+# alert is a downstream symptom — don't also fire those.
+inhibit_rules:
+  - source_matchers: ['alertname = "ScpEngineDown"']
+    target_matchers: ['severity =~ "page|ticket"']
+    equal: ["service"]
+
+receivers:
+  - name: default
+    webhook_configs:
+      - url: "http://alert-sink:9000/default"
+        send_resolved: true
+  - name: pager
+    webhook_configs:
+      # Replace with a real pager integration; URL/keys come from the environment.
+      - url: "http://alert-sink:9000/page"
+        send_resolved: true
+  - name: tickets
+    webhook_configs:
+      - url: "http://alert-sink:9000/ticket"
+        send_resolved: true

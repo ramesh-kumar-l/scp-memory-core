@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+
+# Node / TypeScript SDK
+node_modules/
+*.tsbuildinfo
+
+# Tooling caches
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Local databases / env
+*.db
+*.sqlite
+*.sqlite3
+.env
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/

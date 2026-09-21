@@ -1,0 +1,142 @@
+{
+  "uid": "scp-overview",
+  "title": "SCP Memory Engine — Overview & SLOs",
+  "tags": ["scp", "memory-engine", "slo"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "time": {"from": "now-6h", "to": "now"},
+  "templating": {"list": []},
+  "panels": [
+    {
+      "type": "row",
+      "title": "Availability & Latency SLOs",
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 0}
+    },
+    {
+      "type": "stat",
+      "title": "Error ratio (5m) — SLO < 0.1%",
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "gridPos": {"h": 6, "w": 6, "x": 0, "y": 1},
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "thresholds": {"mode": "absolute", "steps": [
+            {"color": "green", "value": null},
+            {"color": "red", "value": 0.001}
+          ]}
+        }
+      },
+      "targets": [
+        {"expr": "job:scp_api_errors:ratio_rate5m", "refId": "A"}
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "p95 latency (5m) — SLO < 300ms",
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "gridPos": {"h": 6, "w": 6, "x": 6, "y": 1},
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "thresholds": {"mode": "absolute", "steps": [
+            {"color": "green", "value": null},
+            {"color": "red", "value": 0.3}
+          ]}
+        }
+      },
+      "targets": [{"expr": "job:scp_api_latency:p95_5m", "refId": "A"}]
+    },
+    {
+      "type": "stat",
+      "title": "p99 latency (5m) — SLO < 1s",
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "gridPos": {"h": 6, "w": 6, "x": 12, "y": 1},
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "thresholds": {"mode": "absolute", "steps": [
+            {"color": "green", "value": null},
+            {"color": "red", "value": 1}
+          ]}
+        }
+      },
+      "targets": [{"expr": "job:scp_api_latency:p99_5m", "refId": "A"}]
+    },
+    {
+      "type": "stat",
+      "title": "Retrieval p95 (5m) — SLO < 500ms",
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "gridPos": {"h": 6, "w": 6, "x": 18, "y": 1},
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "thresholds": {"mode": "absolute", "steps": [
+            {"color": "green", "value": null},
+            {"color": "red", "value": 0.5}
+          ]}
+        }
+      },
+      "targets": [{"expr": "endpoint:scp_retrieval_latency:p95_5m", "refId": "A"}]
+    },
+    {
+      "type": "row",
+      "title": "Traffic",
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 7}
+    },
+    {
+      "type": "timeseries",
+      "title": "Request rate by endpoint",
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+      "fieldConfig": {"defaults": {"unit": "reqps"}},
+      "targets": [
+        {"expr": "sum by (endpoint) (rate(scp_api_request_duration_seconds_count[5m]))", "legendFormat": "{{endpoint}}", "refId": "A"}
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Latency p50 / p95 / p99",
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+      "fieldConfig": {"defaults": {"unit": "s"}},
+      "targets": [
+        {"expr": "histogram_quantile(0.50, sum by (le) (rate(scp_api_request_duration_seconds_bucket[5m])))", "legendFormat": "p50", "refId": "A"},
+        {"expr": "job:scp_api_latency:p95_5m", "legendFormat": "p95", "refId": "B"},
+        {"expr": "job:scp_api_latency:p99_5m", "legendFormat": "p99", "refId": "C"}
+      ]
+    },
+    {
+      "type": "row",
+      "title": "Memory & Trust",
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 16}
+    },
+    {
+      "type": "timeseries",
+      "title": "Memory operations (rate)",
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 17},
+      "fieldConfig": {"defaults": {"unit": "ops"}},
+      "targets": [
+        {"expr": "rate(scp_memories_created_total[5m])", "legendFormat": "created", "refId": "A"},
+        {"expr": "rate(scp_memories_updated_total[5m])", "legendFormat": "updated", "refId": "B"},
+        {"expr": "sum(rate(scp_memories_deleted_total[5m]))", "legendFormat": "deleted", "refId": "C"},
+        {"expr": "rate(scp_memories_deduped_total[5m])", "legendFormat": "deduped", "refId": "D"},
+        {"expr": "rate(scp_memories_consolidated_total[5m])", "legendFormat": "consolidated", "refId": "E"},
+        {"expr": "rate(scp_memories_decayed_total[5m])", "legendFormat": "decayed", "refId": "F"}
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Retrieval queries by mode & trust evaluations",
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 17},
+      "fieldConfig": {"defaults": {"unit": "ops"}},
+      "targets": [
+        {"expr": "sum by (mode) (rate(scp_retrieval_queries_total[5m]))", "legendFormat": "retrieval {{mode}}", "refId": "A"},
+        {"expr": "rate(scp_trust_evaluations_total[5m])", "legendFormat": "trust evals", "refId": "B"}
+      ]
+    }
+  ]
+}

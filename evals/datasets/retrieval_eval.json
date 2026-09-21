@@ -1,0 +1,26 @@
+{
+  "description": "Fixed retrieval-quality set: a small labelled corpus + queries with relevant doc ids. The benchmark loads the corpus into an in-memory engine, runs each query under weighted-linear fusion and reciprocal-rank fusion, and compares nDCG@k / MRR. Doc ids here are local handles; the harness maps them to engine-generated ids.",
+  "namespace": "bench",
+  "k": 5,
+  "corpus": [
+    {"id": "m01", "type": "fact", "source": "user", "content": "the capital of france is paris"},
+    {"id": "m02", "type": "fact", "source": "user", "content": "the eiffel tower is located in paris france"},
+    {"id": "m03", "type": "fact", "source": "user", "content": "python is a popular programming language"},
+    {"id": "m04", "type": "fact", "source": "user", "content": "javascript is a programming language that runs in the browser"},
+    {"id": "m05", "type": "preference", "source": "user", "content": "user prefers dark mode in the code editor"},
+    {"id": "m06", "type": "preference", "source": "user", "content": "user prefers tabs over spaces for indentation in the editor"},
+    {"id": "m07", "type": "event", "source": "system", "content": "the production server deployment completed successfully"},
+    {"id": "m08", "type": "event", "source": "system", "content": "the nightly database backup failed last night"},
+    {"id": "m09", "type": "fact", "source": "user", "content": "the sun is a star at the center of the solar system"},
+    {"id": "m10", "type": "fact", "source": "user", "content": "water boils at one hundred degrees celsius at sea level"},
+    {"id": "m11", "type": "fact", "source": "inferred", "content": "the great wall of china visible from space is a myth"},
+    {"id": "m12", "type": "fact", "source": "user", "content": "machine learning models require large amounts of training data"}
+  ],
+  "queries": [
+    {"query": "what is the capital of france", "relevant": ["m01", "m02"]},
+    {"query": "programming language for the browser", "relevant": ["m03", "m04"]},
+    {"query": "user editor preferences dark mode", "relevant": ["m05", "m06"]},
+    {"query": "production server deployment status", "relevant": ["m07"]},
+    {"query": "training data for machine learning models", "relevant": ["m12"]}
+  ]
+}

@@ -1,0 +1,191 @@
+# 25 — ADR Log
+
+**Status:** Active · **Phase:** 7 · **Last updated:** 2026-06-20
+
+Architecture Decision Records. Format: Context · Decision · Status · Consequences.
+Phase 0 locks the recommended stack (ADR-001…010); Phase 5 adds ADR-011…013;
+Phase 6 adds ADR-014; Phase 7 adds ADR-015. All **Accepted**. Narrative in
+[06-technical-decisions](06-technical-decisions.md).
+
+---
+
+## ADR-001 — Implementation language: Python 3.11+
+- **Context:** Need fast iteration and a strong AI/ML ecosystem; SDK and server
+  in one language family.
+- **Decision:** Python 3.11+ for the engine and reference server.
+- **Status:** Accepted (2026-06-20)
+- **Consequences:** Excellent ecosystem and hiring; not the fastest runtime —
+  mitigate hot paths via Qdrant and native libs. TypeScript SDK added in Phase 5.
+
+## ADR-002 — API framework: FastAPI
+- **Context:** Need a typed, async HTTP API with OpenAPI docs.
+- **Decision:** FastAPI.
+- **Status:** Accepted (2026-06-20)
+- **Consequences:** Native Pydantic integration, auto OpenAPI; async-first.
+  Couples us to Starlette/Pydantic conventions (acceptable).
+
+## ADR-003 — Validation/models: Pydantic v2
+- **Context:** Need strict, fast request/response and domain validation.
+- **Decision:** Pydantic v2.
+- **Status:** Accepted (2026-06-20)
+- **Consequences:** Clear contracts and speed; v2 API differs from v1 (greenfield,
+  so no migration cost).
+
+## ADR-004 — ORM: SQLAlchemy 2.x
+- **Context:** Need backend portability (SQLite↔Postgres) and maintainable data
+  access.
+- **Decision:** SQLAlchemy 2.x (with async where useful).
+- **Status:** Accepted (2026-06-20)
+- **Consequences:** Mature and portable; learning curve vs. lighter ORMs.
+
+## ADR-005 — Database (MVP): SQLite
+- **Context:** Local-first and on-device require zero-config storage.
+- **Decision:** SQLite as the MVP relational store and source of truth.
+- **Status:** Accepted (2026-06-20)
+- **Consequences:** Trivial setup; concurrency/scale limits — addressed by ADR-006.
+
+## ADR-006 — Database (scale): PostgreSQL
+- **Context:** Cloud/scale deployments need concurrency and robustness.
+- **Decision:** PostgreSQL as the scale backend, behind the same SQLAlchemy layer.
+- **Status:** Accepted (2026-06-20)
+- **Consequences:** Same domain model scales out; pgvector remains a future option
+  that could simplify the vector tier.
+
+## ADR-007 — Vector store: Qdrant
+- **Context:** Need ANN search with strong metadata filtering, open source,
+  local + cloud.
+- **Decision:** Qdrant as the embedding/vector store.
+- **Status:** Accepted (2026-06-20)
+- **Consequences:** Good filtering and Python client; an extra service to run —
+  acceptable; vector store is a derived, swappable index.
+
+## ADR-008 — Graph layer: NetworkX (Neo4j optional later)
+- **Context:** Need memory-to-memory relationships without heavy infra at MVP.
+- **Decision:** NetworkX now; Neo4j optional later if needed.
+- **Status:** Accepted (2026-06-20)
+- **Consequences:** Zero infra, pure Python; in-memory scale limits — revisit at
+  Phase 3+ if relationship queries become a bottleneck.
+
+## ADR-009 — Observability: OpenTelemetry + Prometheus + Grafana
+- **Context:** Need vendor-neutral, portable metrics/traces/logs.
+- **Decision:** OpenTelemetry instrumentation → Prometheus metrics → Grafana
+  dashboards.
+- **Status:** Accepted (2026-06-20)
+- **Consequences:** Standard and portable; instrumentation discipline required
+  (a quality gate). Detail in [17-observability-model](17-observability-model.md).
+
+## ADR-010 — Testing: Pytest (+ integration + benchmark)
+- **Context:** Need a standard test framework supporting unit, integration, and
+  benchmark layers.
+- **Decision:** Pytest with integration and benchmark test suites.
+- **Status:** Accepted (2026-06-20)
+- **Consequences:** Rich ecosystem and fixtures; benchmark discipline required
+  (a quality gate). Detail in [18-testing-strategy](18-testing-strategy.md).
+
+## ADR-011 — Production embeddings: local sentence-transformers, opt-in (Phase 5)
+- **Context:** Retrieval needs real *semantic* vectors, but the default/test path
+  must stay hermetic and offline. The carried-over question: which model behind the
+  `Embedder` seam, and must it run offline?
+- **Decision:** `sentence-transformers` with `all-MiniLM-L6-v2` (384-dim) — runs
+  **fully on-device, no embedding API**. Selected via `SCP_EMBEDDER=sentence-`
+  `transformers` (needs the `[embeddings]` extra); `embedding_offline=True` pins the
+  loader to the local HF cache (air-gap safe). The deterministic `HashingEmbedder`
+  stays the offline-by-default stand-in so CI needs no model.
+- **Status:** Accepted (2026-06-20)
+- **Consequences:** Real semantics on demand without changing retrieval/ranking/
+  vector code; opt-in keeps tests fast and network-free. Explicit selection fails
+  loudly if the model can't load (no silent degradation). Qdrant collections must
+  match the model's dimension when used together. NLI for trust remains deferred.
+
+## ADR-012 — SDK stack: httpx (Python) + Fetch API (TypeScript) (Phase 5)
+- **Context:** Phase 5 needs official clients over the full, stable API including
+  trust, integration-test-friendly and runnable in many environments.
+- **Decision:** Python SDK wraps `httpx` (sync) with an injectable client; the
+  TypeScript SDK uses the global `fetch` (Node 18+/browser/Deno) with an injectable
+  `fetchFn`. Both are thin, typed, 1:1 with the API schemas, with a typed error
+  hierarchy and forward-compatible parsing.
+- **Status:** Accepted (2026-06-20)
+- **Consequences:** Tests run in-process (FastAPI `TestClient` / stubbed fetch) with
+  no server; minimal dependencies. Sync-only Python (async deferred); SDKs version
+  independently (0.5.0) tracking the engine. Detail in
+  [../docs/phase-5-sdks.md](../docs/phase-5-sdks.md).
+
+## ADR-013 — Rollout: SDKs stay in-repo until 1.0; prod embedder opts in at deploy (Phase 5)
+- **Context:** Two carried-over questions: publish the SDKs to PyPI/npm now, and
+  flip the production embedder default to `sentence-transformers`?
+- **Decision:** (1) **Keep the SDKs in-repo this cycle** — the API isn't frozen,
+  there are no external consumers, and published versions are permanent. Optionally
+  reserve the `scp-memory-sdk` / `@scp/memory-sdk` names with a placeholder. Full
+  publish deferred to the **1.0 / API-freeze** milestone (after Phase 6 gates).
+  (2) **Production embedder opts in at deployment, not in code** — the code default
+  stays `hashing` (hermetic/offline CI + fail-loud contract); prod sets
+  `SCP_EMBEDDER=sentence-transformers` with a warm cache and a deploy-time load
+  smoke check.
+- **Status:** Accepted (2026-06-20)
+- **Consequences:** Freedom to break the 0.x API without yanking public releases;
+  zero release-maintenance burden pre-1.0. Real semantics in prod without touching
+  retrieval/ranking. Caveat: Qdrant collections are dimension-bound (384 for
+  MiniLM) — re-embed when switching from a hashing-indexed collection. Refines
+  [ADR-011](#adr-011--production-embeddings-local-sentence-transformers-opt-in-phase-5)
+  and [ADR-012](#adr-012--sdk-stack-httpx-python--fetch-api-typescript-phase-5).
+
+## ADR-014 — Tracing is opt-in; SLOs as Prometheus rules + a runnable stack (Phase 6)
+- **Context:** ADR-009 fixed the OTel→Prometheus→Grafana stack. Phase 6 must
+  deliver it concretely (dashboards, a traced request path, defined SLOs) without
+  forcing heavy OpenTelemetry deps onto the hermetic test/offline path, and must
+  define what "healthy" means for production.
+- **Decision:** (1) **Tracing is opt-in** (`SCP_TRACING_ENABLED`, default off) and
+  lives behind the `[observability]` extra; FastAPI + SQLAlchemy auto-instrumentation
+  gives the API→service→store span tree, exported over OTLP. Metrics and structured
+  logs stay always-on (no gate). Enabling without the extra **fails loudly** (mirrors
+  ADR-011). (2) **SLOs are codified** as Prometheus recording + multi-window-burn
+  alerting rules (availability 99.9%; API p95<300ms / p99<1s; retrieval p95<500ms;
+  liveness) and visualised in a provisioned Grafana dashboard. (3) A **runnable
+  stack** (`deploy/observability/`: app + collector + Tempo + Prometheus + Grafana
+  via docker-compose) plus liveness/readiness probes (`/health`, `/health/ready`).
+- **Status:** Accepted (2026-06-20)
+- **Consequences:** Real distributed tracing and SLO alerting in production without
+  slowing CI or breaking offline dev. Logs correlate to traces via `trace_id`.
+  Vendor-neutral (OTLP) so the trace backend swaps freely. Bundled Tempo uses local
+  storage — back it with object storage in prod. Per-stage retrieval spans deferred.
+  Realises [ADR-009](#adr-009--observability-opentelemetry--prometheus--grafana).
+
+## ADR-015 — Admin Console: Vite + React + TS, reuses the SDK, same-origin (no CORS) (Phase 7)
+- **Context:** Phase 7 needs an inspectable UI over memory/retrieval/trust + SLOs.
+  Two questions: the front-end stack, and how a browser app reaches the engine
+  without weakening its security posture (the engine ships **no CORS**, by design —
+  [16-security-model](16-security-model.md)).
+- **Decision:** (1) **Vite + React + TypeScript** SPA in `console/`, with **React
+  Query** for fetch/cache/loading/error state and **React Router** for the six
+  screens; design tokens (Inter, 8-pt grid, light+dark) per
+  [19-ui-design-system](19-ui-design-system.md). (2) **Reuse the official
+  `@scp/memory-sdk`** (Phase 5) as the only client — the console exercises the same
+  contract as any consumer; ops-only endpoints (`/health/ready`, `/metrics`) use a
+  thin fetch helper. (3) **Same-origin transport:** the console calls relative paths;
+  in dev the Vite server proxies `/v1`, `/health`, `/metrics` to the engine, and in
+  prod the static bundle sits behind a reverse proxy that forwards those paths. So
+  **the engine needs no CORS change** and no engine code is touched. Dashboards/
+  Benchmarks parse the Prometheus `/metrics` text client-side (no Grafana dependency
+  for in-console SLIs).
+- **Status:** Accepted (2026-06-20)
+- **Consequences:** Console ships with zero engine changes; the SDK stays the single
+  source of API truth (DRY). Strict modularity held (all files < 300 lines). Browser
+  metric parsing duplicates a little of Prometheus' quantile math (unit-tested).
+  Same-origin means prod deployments must front both with one proxy; a future
+  multi-origin/hosted console would need the opt-in CORS allowlist added then.
+  Console versions independently (0.6.0). Builds on
+  [ADR-012](#adr-012--sdk-stack-httpx-python--fetch-api-typescript-phase-5) and
+  [ADR-014](#adr-014--tracing-is-opt-in-slos-as-prometheus-rules--a-runnable-stack-phase-6).
+
+---
+
+## Process
+
+- New significant decisions get the next ADR number here and a note in
+  [06-technical-decisions](06-technical-decisions.md).
+- Superseding decisions reference the ADR they replace; never edit a decided ADR's
+  history — add a new one with status `Supersedes ADR-xxx`.
+
+## Related
+
+[06-technical-decisions](06-technical-decisions.md) · [03-system-architecture](03-system-architecture.md)

@@ -1,0 +1,12 @@
+# Auto-load dashboards bundled under /var/lib/grafana/dashboards (Phase 6).
+apiVersion: 1
+
+providers:
+  - name: scp-dashboards
+    orgId: 1
+    folder: SCP Memory Engine
+    type: file
+    disableDeletion: false
+    editable: true
+    options:
+      path: /var/lib/grafana/dashboards
